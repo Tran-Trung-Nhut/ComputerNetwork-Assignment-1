@@ -1,0 +1,139 @@
+{
+  "id": "3287ba50-a4c9-4e68-8621-6fa9becad008",
+  "prevId": "e0d531af-0a07-4731-bfff-d61648df798b",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.file": {
+      "name": "file",
+      "schema": "",
+      "columns": {
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pieceSize": {
+          "name": "pieceSize",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "noPiece": {
+          "name": "noPiece",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "public.node": {
+      "name": "node",
+      "schema": "",
+      "columns": {
+        "port": {
+          "name": "port",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "apiPort": {
+          "name": "apiPort",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wsPort": {
+          "name": "wsPort",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "node_username_unique": {
+          "name": "node_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        },
+        "node_apiPort_unique": {
+          "name": "node_apiPort_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "apiPort"
+          ]
+        },
+        "node_wsPort_unique": {
+          "name": "node_wsPort_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "wsPort"
+          ]
+        }
+      },
+      "checkConstraints": {}
+    },
+    "public.nodeFile": {
+      "name": "nodeFile",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "port": {
+          "name": "port",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
