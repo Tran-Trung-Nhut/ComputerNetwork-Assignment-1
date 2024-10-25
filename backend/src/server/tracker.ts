@@ -3,9 +3,10 @@ import dotenv from 'dotenv'
 import { db } from '../db/db';
 import { node, nodeFile } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { App, app, certainClient, fileNames, resetCertainClient, resetFileName } from '../app';
+import { certainClient, resetCertainClient } from '../app';
 import { createServer, Server } from 'net';
 import { Socket } from 'net';
+import { networkInterfaces } from 'os'
 
 dotenv.config()
 
@@ -22,61 +23,97 @@ class Tracker{
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
             this.peers.push(socket)
 
-            const checkInterval = setInterval(() => {
-                if (certainClient !== null) {
+            // const checkInterval = setInterval(() => {
+            //     if (certainClient !== null) {
 
-                    const message = JSON.stringify({
-                        fileNames: fileNames,
-                        certainClient: certainClient,
-                    });
-                    //Trả giá trị lại ban đầu để gửi mới cho socket
-                    resetFileName()
-                    resetCertainClient()
+            //         const message = JSON.stringify({
 
-                    socket.write(message);
+            //             certainClient: certainClient,
+            //         });
+            //         //Trả giá trị lại ban đầu để gửi mới cho socket
+            //         resetCertainClient()
 
-                    clearInterval(checkInterval);
+            //         socket.write(message);
+
+            //         clearInterval(checkInterval);
+            //     }
+            // }, 1000);
+
+
+            socket.on('data', (data) => {
+                const message = JSON.parse(data.toString())
+
+                if(message.message === 'login'){
+                    this.verifyLogin(socket, message.username, message.password)
                 }
-            }, 1000);
+            })
 
             socket.on('close', () => {
                 this.peers = this.peers.filter(peer => peer !== socket);
             });
         })
 
-        this.netServer.listen(port,  () => {
-            console.log(`Net server is running on port: ${port}`);
-        });
+        const localIp = this.getLocalIp()
+        if(localIp){
+            this.netServer.listen(port, localIp, () =>{
+                console.log(`Tracker: ${localIp}:${port}`)
+            })
+        }else{
+            console.log('cannot open port!')
+        }
+    }
 
-        app.listen(process.env.API_TRACKER_PORT, () => {})
+    private verifyLogin = async (socket: Socket, username: string, password: string) => {
+        if(!username || username === '' || !password || password === ''){
+            return socket.write(JSON.stringify({
+                message: "Invalid username or password"
+            }))
+        }
+
+        const user = await db
+        .select()
+        .from(node)
+        .where(eq(node.username, username))
+
+        if(user.length === 0){
+            return socket.write(JSON.stringify({
+                message: "Invalid username"
+            }))
+        }
+
+        if(user[0].password !== password){
+            return socket.write(JSON.stringify({
+                message: "Invalid password"
+            }))
+        }
+
+        return socket.write(JSON.stringify({
+            message: "Login successfully"
+        }))
     }
 
     public handleConnection = async () => {
-        app.get('/tracker/peers/:fileName', async (req: Request, res: Response) => {
-            const { fileName } = req.params   
+        
+    }
 
-            const peers = await db
-            .select({
-                port: nodeFile.port
-            })
-            .from(nodeFile)
-            .where(eq(nodeFile.name, fileName))
+    private getLocalIp = () : string | undefined => {
+        const nets = networkInterfaces();
+        let localIp;
 
-            if(peers.length === 0){
-                res.status(404).json({
-                    message: "Not found"
-                })
-                return
+        for(const name of Object.keys(nets)){
+            for(const net of nets[name] || []){
+                if(net.family === 'IPv4' && !net.internal){
+                    localIp = net.address;
+                    break
+                }
             }
 
-            res.status(200).json({
-                message: "Success",
-                peers: peers
-            })
-        })
+            if(localIp) break
+        }
+
+        return localIp
     }
 }
 
-export const appMain = new App()
 
 new Tracker(Number(process.env.TRACKER_PORT))

@@ -11,7 +11,6 @@ let client:ClientDto | null = null
 
 class NOde{
     private peerServer: Server
-    private webServer : WebSocketServer
     private peerPort: number | undefined
     private apiPort: number
     private host : string
@@ -28,18 +27,8 @@ class NOde{
         this.peerPort = clientPort
         this.host = host || ''
         this.apiPort = apiPort
-        this.webServer = new WebSocketServer({ port: wsPort})
 
-        this.webServer.on('connection', (ws: WebSocket) => {
-            console.log('Connected with frontend')
-            
-            this.activeWsClients.push(ws);
 
-            ws.on('close', () => {
-                // Xóa WebSocket khỏi danh sách khi ngắt kết nối
-                this.activeWsClients = this.activeWsClients.filter(client => client !== ws);
-            });
-        })
 
         this.peerServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
@@ -82,10 +71,7 @@ class NOde{
 
         this.requestConnectToPeer()
 
-        //api của peer
-        app.listen(this.apiPort, () => {
-            console.log(`client is running at port: ${this.apiPort}`)
-        })
+        
     }
 
     private sendConnectionRequests(port: number) {
@@ -169,12 +155,37 @@ class NOde{
 
 }
 
+let trackerIP: string = ''
+
+const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT)})
+webServer.on('connection', (ws: WebSocket) => {
+    console.log('Connected with frontend')
+    
+    ws.on('message',(message) => {
+        try{
+            const data = JSON.parse(message.toString())
+
+            if(data.message === 'sendTrackerIp'){
+                trackerIP = data.trackerIP
+            }
+        }catch(e){
+            console.log(e)
+        }
+    })
+
+    ws.on('close', () => {});
+})
+
+
 
 const waitingClient = new Socket()
 
-waitingClient.connect(Number(process.env.TRACKER_PORT), process.env.HOST || '',() =>{
-    console.log(`Connected to tracker at port ${process.env.TRACKER_PORT}`);
+while(trackerIP === ''){}  //Chờ cho đến khi có giá trị
+
+waitingClient.connect(Number(process.env.TRACKER_PORT), trackerIP || '',() =>{
+    console.log(`Connected to tracker address: ${trackerIP}:${process.env.TRACKER_PORT}`);
 })
+
 
 waitingClient.on('data', (data) => {
     const message = data.toString();

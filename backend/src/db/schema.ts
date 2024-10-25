@@ -3,6 +3,7 @@ import { integer, numeric, pgTable, primaryKey, text, uuid, varchar } from "driz
 export const node = pgTable("node",{
     port: integer('port').notNull().primaryKey(),
     username: varchar('username', { length: 255}).notNull().unique(),
+    password: varchar('password', {length: 255}).notNull(),
     apiPort: integer('apiPort').notNull().unique(),
     wsPort: integer('wsPort').notNull().unique(),
 })
