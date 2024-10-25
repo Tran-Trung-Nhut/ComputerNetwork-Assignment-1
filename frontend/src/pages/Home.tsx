@@ -1,7 +1,7 @@
 import Login from "./Login";
 import { useState } from "react";
 import axios from "axios";
-import { clientState, trackerApiState, } from "../state";
+import { clientState } from "../state";
 import { useRecoilValue } from "recoil";
 
 interface Peer {
@@ -13,15 +13,12 @@ export default function Home(){
     const [listPort, setListPort] = useState([])
     const [connectionStatus, setConnectionStatus] = useState<{ [key: string]: string }>({});
     const client = useRecoilValue(clientState)
-    const trackerAPI = useRecoilValue(trackerApiState)
 
     const handleFindPeers = async () => {
         try{
-            const response = await axios.get(`${trackerAPI}:8000/tracker/peers/${fileName}`,)
+            
+            
 
-            const ports = response.data.peers.map((peer: Peer) => peer.port)
-
-            setListPort(ports)
         }catch(e){
             console.log(e)
             setListPort([])

@@ -16,7 +16,7 @@ export const isLoggedInState = atom({
 });
 
 
-export const trackerApiState = atom({
-    key: 'trackerApiState',
-    default: ''
+export const wsState = atom <WebSocket | null>({
+    key: 'wsState',
+    default: null
 })
