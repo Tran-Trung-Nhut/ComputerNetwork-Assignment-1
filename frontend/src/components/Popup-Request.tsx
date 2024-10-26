@@ -12,9 +12,7 @@ export default function PopupRequest() {
     useEffect(() => {
         console.log(client)
 
-        if(client.wsPort === -1) return
-
-        const ws = new WebSocket(`ws://localhost:${client?.wsPort}`)
+        const ws = new WebSocket(`ws://localhost:3000`)
 
         ws.onmessage = (event) => {
             let messageData : string;
@@ -54,7 +52,7 @@ export default function PopupRequest() {
 
     const handleAccept = async (accept: boolean) => {
         try{
-            const response = await axios.post(`http://localhost:${client.apiPort}/api/connect`,{
+            const response = await axios.post(`http://localhost:/api/connect`,{
                 peerPort: requestLists[0],
                 accept: accept
             })

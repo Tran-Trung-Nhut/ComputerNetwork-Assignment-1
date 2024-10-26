@@ -11,8 +11,9 @@ export default function Login(){
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const setIsLoggedIn = useSetRecoilState(isLoggedInState)
-    const setClient = useSetRecoilState(clientState)
     const ws = useRecoilValue(wsState)
+    const client = useRecoilValue(clientState)
+    const setClient = useSetRecoilState(clientState)
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) =>{
         e.preventDefault()
@@ -32,23 +33,6 @@ export default function Login(){
                 password: password
             }))
 
-            ws.onmessage = (event) => {
-                const data = event.data
-                const message = JSON.parse(data)
-
-                if(message.message === 'Invalid username or password' || 
-                    message.message === 'Invalid username' || 
-                    message.message === 'Invalid password'){
-                    console.log(message.message)
-                    return
-                }
-
-                setIsLoggedIn(true)
-                navigate('/home')
-            }
-
-            ws.close()
-
         }catch(err){
             console.log(err)
         }
@@ -56,51 +40,99 @@ export default function Login(){
 
     const handleSendTrackerIp = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if(!ws){
+            console.log('havent connect with backend')
+            return
+        }
+
+        console.log(inputTrackerIp)
+        ws.send(JSON.stringify({
+            message: "sendTrackerIp",
+            trackerIP: inputTrackerIp
+        }))
     }
 
+    useEffect(() => {
+        if(client.port !== -1){
+            setIsLoggedIn(true);
+            navigate("/home");
+        }
+    }, [navigate])
+
+    useEffect(() => {
+        if (!ws) return;
+
+        ws.onmessage = (event) => {
+            const data = event.data
+            const message = JSON.parse(data)
+            console.log(message.message)
+            if(message.message === 'Invalid username or password'){
+                console.log(message.message)
+                return
+            }
+            
+            if (message.message === 'Login successfully') {
+                console.log(message);
+
+                const newClient = {
+                    port: message.port,
+                    username: message.username,
+                    password: message.password
+                }
+
+                setClient(newClient)
+
+                localStorage.setItem("client", JSON.stringify(newClient))
+                setIsLoggedIn(true);
+                navigate('/home');  // Chuyển hướng sau khi đăng nhập thành công
+            }
+        }
+
+        return () => {
+            ws.onmessage = null; // Dọn dẹp listener khi component unmount
+        };
+    },[ws, setIsLoggedIn, navigate])
 
     return (
         
         <div>
             
-           {inputTrackerIp !== ''? (
-                <form onSubmit={handleLogin}>
-                <p>Thông tin đăng nhập</p>
-                <input 
-                type="text" 
-                value={username}
-                placeholder="nhập tài khoản"
+        
+            <form onSubmit={handleLogin}>
+            <p>Thông tin đăng nhập</p>
+            <input 
+            type="text" 
+            value={username}
+            placeholder="nhập tài khoản"
+            className="border-2"
+            onChange={(e) => setUsername(e.target.value)}/>
+            <input 
+                type="password" 
                 className="border-2"
-                onChange={(e) => setUsername(e.target.value)}/>
+                placeholder="nhập mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)} />
+            <button 
+            type="submit"
+            className="border-2 border-black active:scale-90">
+                Đăng nhập</button>
+            </form>
+
+
+                <form onSubmit={handleSendTrackerIp}>
                 <input 
-                    type="password" 
+                    type="text" 
                     className="border-2"
-                    placeholder="nhập mật khẩu"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)} />
-                <button 
-                type="submit"
-                className="border-2 border-black active:scale-90">
-                    Đăng nhập</button>
-                </form>
-           ):(
-            <>
-                 <form onSubmit={handleSendTrackerIp}>
-                    <input 
-                        type="text" 
-                        className="border-2"
-                        placeholder="Nhập IP của Máy chủ"
-                        value={inputTrackerIp}
-                        onChange={(e) => setInputTrackerIp(e.target.value)} />
-                    
-                    <button
-                        type="submit"
-                        className="border-2">
-                        Gửi
-                    </button>
-                </form>
-            </>
-           )}
+                    placeholder="Nhập IP của Máy chủ"
+                    value={inputTrackerIp}
+                    onChange={(e) => setInputTrackerIp(e.target.value)} />
+                
+                <button
+                    type="submit"
+                    className="border-2">
+                    Gửi
+                </button>
+            </form>
         </div>
     )
 }

@@ -23,26 +23,9 @@ class Tracker{
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
             this.peers.push(socket)
 
-            // const checkInterval = setInterval(() => {
-            //     if (certainClient !== null) {
-
-            //         const message = JSON.stringify({
-
-            //             certainClient: certainClient,
-            //         });
-            //         //Trả giá trị lại ban đầu để gửi mới cho socket
-            //         resetCertainClient()
-
-            //         socket.write(message);
-
-            //         clearInterval(checkInterval);
-            //     }
-            // }, 1000);
-
-
             socket.on('data', (data) => {
                 const message = JSON.parse(data.toString())
-
+                console.log(message)
                 if(message.message === 'login'){
                     this.verifyLogin(socket, message.username, message.password)
                 }
@@ -88,7 +71,10 @@ class Tracker{
         }
 
         return socket.write(JSON.stringify({
-            message: "Login successfully"
+            message: "Login successfully",
+            port: user[0].port,
+            username: user[0].username,
+            password: user[0].password
         }))
     }
 

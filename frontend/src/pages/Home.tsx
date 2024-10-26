@@ -4,9 +4,7 @@ import axios from "axios";
 import { clientState } from "../state";
 import { useRecoilValue } from "recoil";
 
-interface Peer {
-    port: string;
-}
+
 
 export default function Home(){
     const [fileName, setFileName] = useState('')
@@ -27,7 +25,7 @@ export default function Home(){
 
     const handleConnectButtion = async (peerPort: number) => {
         try{
-            const response = await axios.post(`http://localhost:${client?.apiPort}/api/request-connect`,{
+            const response = await axios.post(`http://localhost:}/api/request-connect`,{
                 peerPort: peerPort
             }) 
             
@@ -36,7 +34,7 @@ export default function Home(){
                 [peerPort]: "waiting",
             }));
             
-            const ws = new WebSocket(`ws://localhost:${client?.wsPort}`)
+            const ws = new WebSocket(`ws://localhost:`)
             
             // if(!ws) return 
 

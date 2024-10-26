@@ -155,37 +155,70 @@ class NOde{
 
 }
 
-let trackerIP: string = ''
 
-const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT)})
+const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT) | 1000})
+
 webServer.on('connection', (ws: WebSocket) => {
     console.log('Connected with frontend')
     
     ws.on('message',(message) => {
         try{
+            
             const data = JSON.parse(message.toString())
-
             if(data.message === 'sendTrackerIp'){
-                trackerIP = data.trackerIP
+                connectToTracker(data.trackerIP)
+            }
+
+            if(data.message == 'login'){
+                login(ws, data.username, data.password)
             }
         }catch(e){
             console.log(e)
         }
     })
 
-    ws.on('close', () => {});
 })
 
 
 
 const waitingClient = new Socket()
 
-while(trackerIP === ''){}  //Chờ cho đến khi có giá trị
 
-waitingClient.connect(Number(process.env.TRACKER_PORT), trackerIP || '',() =>{
-    console.log(`Connected to tracker address: ${trackerIP}:${process.env.TRACKER_PORT}`);
-})
+function connectToTracker (trackerIP: string){
+    waitingClient.connect(Number(process.env.TRACKER_PORT), trackerIP, () => {
+        console.log(`Connected to tracker address: ${trackerIP}:${process.env.TRACKER_PORT}`);
+    });
+}
 
+function login (ws: WebSocket, username: string, password: string){
+    waitingClient.write(JSON.stringify({
+        message: 'login',
+        username: username,
+        password: password
+    }))
+
+    waitingClient.on('data', (data) => {
+        const jsonData = data.toString()
+        const message = JSON.parse(jsonData)
+
+        if(message.message === 'Invalid username or password' || 
+            message.message === 'Invalid username' || 
+            message.message === 'Invalid password'){
+            ws.send(JSON.stringify({
+                message: 'Invalid username or password'
+            }))
+        }
+
+        if(message.message === 'Login successfully'){
+            ws.send(JSON.stringify({
+                message: 'Login successfully',
+                port: message.port,
+                username: message.username,
+                password: message.password
+            }))
+        }
+    })
+}
 
 waitingClient.on('data', (data) => {
     const message = data.toString();
