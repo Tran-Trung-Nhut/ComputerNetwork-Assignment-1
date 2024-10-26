@@ -15,7 +15,7 @@ function App() {
   const setIsLoggedIn = useSetRecoilState(isLoggedInState)
 
   useEffect(() => {
-    const websocket = new WebSocket('ws://localhost:1000')
+    const websocket = new WebSocket('ws://localhost:2000')
     setWs(websocket)
 
     return() => {

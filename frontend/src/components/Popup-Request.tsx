@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import { useRecoilValue } from "recoil"
 import { clientState } from "../state"
-import { ClientDto } from "../dtos/client.dto"
 import axios from "axios"
 
 export default function PopupRequest() {

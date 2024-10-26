@@ -156,7 +156,7 @@ class NOde{
 }
 
 
-const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT) | 1000})
+const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT) | 2000})
 
 webServer.on('connection', (ws: WebSocket) => {
     console.log('Connected with frontend')
