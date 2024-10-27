@@ -72,7 +72,6 @@ class Tracker{
 
         return socket.write(JSON.stringify({
             message: "Login successfully",
-            port: user[0].port,
             username: user[0].username,
             password: user[0].password
         }))
@@ -87,14 +86,17 @@ class Tracker{
         let localIp;
 
         for(const name of Object.keys(nets)){
-            for(const net of nets[name] || []){
-                if(net.family === 'IPv4' && !net.internal){
-                    localIp = net.address;
-                    break
-                }
-            }
 
-            if(localIp) break
+            if (name.includes('Wi-Fi') || name.includes('Wireless')) {
+                for(const net of nets[name] || []){
+                    if(net.family === 'IPv4' && !net.internal){
+                        localIp = net.address;
+                        break;
+                    }
+                }
+    
+                if(localIp) break;
+            }
         }
 
         return localIp

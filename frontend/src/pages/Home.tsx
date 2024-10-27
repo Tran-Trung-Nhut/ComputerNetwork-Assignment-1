@@ -66,7 +66,7 @@ export default function Home(){
             {listPort.length !== 0 ? (
                 <ul>
                     {listPort.map((port, index) => (
-                        Number(port) !== client?.port ? (
+                        Number(port) !== 1 ? (
                         <div className="flex">
                             <li key={index}>
                                 Port: {port} {/* Ví dụ sử dụng thẻ */}

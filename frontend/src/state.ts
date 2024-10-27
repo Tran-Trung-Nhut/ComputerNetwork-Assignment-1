@@ -3,7 +3,6 @@ import { atom } from 'recoil';
 export const clientState = atom({
     key: 'clientState', // unique ID (cho Recoil để quản lý)
     default: {
-        port: -1,
         username: '',
         password: ''
     },

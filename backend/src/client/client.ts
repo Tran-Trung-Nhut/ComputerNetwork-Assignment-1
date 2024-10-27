@@ -28,8 +28,6 @@ class NOde{
         this.host = host || ''
         this.apiPort = apiPort
 
-
-
         this.peerServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
 
@@ -166,7 +164,7 @@ webServer.on('connection', (ws: WebSocket) => {
             
             const data = JSON.parse(message.toString())
             if(data.message === 'sendTrackerIp'){
-                connectToTracker(data.trackerIP)
+                connectToTracker(data.trackerIP, data.port)
             }
 
             if(data.message == 'login'){
@@ -184,8 +182,12 @@ webServer.on('connection', (ws: WebSocket) => {
 const waitingClient = new Socket()
 
 
-function connectToTracker (trackerIP: string){
-    waitingClient.connect(Number(process.env.TRACKER_PORT), trackerIP, () => {
+function connectToTracker (trackerIP: string, port: number){
+    waitingClient.connect({
+        port: Number(process.env.TRACKER_PORT), 
+        host: trackerIP,
+        localPort: port
+    }, () => {
         console.log(`Connected to tracker address: ${trackerIP}:${process.env.TRACKER_PORT}`);
     });
 }
@@ -212,7 +214,6 @@ function login (ws: WebSocket, username: string, password: string){
         if(message.message === 'Login successfully'){
             ws.send(JSON.stringify({
                 message: 'Login successfully',
-                port: message.port,
                 username: message.username,
                 password: message.password
             }))

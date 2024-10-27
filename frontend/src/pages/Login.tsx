@@ -8,6 +8,7 @@ import { clientState, isLoggedInState, wsState } from "../state"
 export default function Login(){
     const navigate = useNavigate()
     const [inputTrackerIp, setInputTrackerIp] = useState<string>('')
+    const [port, setPort] = useState<string>('')
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const setIsLoggedIn = useSetRecoilState(isLoggedInState)
@@ -38,7 +39,7 @@ export default function Login(){
         }
     }
 
-    const handleSendTrackerIp = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSendTrackerIpAndPort = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if(!ws){
             console.log('havent connect with backend')
@@ -48,12 +49,13 @@ export default function Login(){
         console.log(inputTrackerIp)
         ws.send(JSON.stringify({
             message: "sendTrackerIp",
-            trackerIP: inputTrackerIp
+            trackerIP: inputTrackerIp,
+            port: Number(port)
         }))
     }
 
     useEffect(() => {
-        if(client.port !== -1){
+        if(client.username !== ''){
             setIsLoggedIn(true);
             navigate("/home");
         }
@@ -75,7 +77,6 @@ export default function Login(){
                 console.log(message);
 
                 const newClient = {
-                    port: message.port,
                     username: message.username,
                     password: message.password
                 }
@@ -119,7 +120,13 @@ export default function Login(){
             </form>
 
 
-                <form onSubmit={handleSendTrackerIp}>
+                <form onSubmit={handleSendTrackerIpAndPort}>
+                <input 
+                    type="text" 
+                    className="border-2"
+                    placeholder="Nhập port của bạn"
+                    value={port}
+                    onChange={(e) => setPort(e.target.value)} />
                 <input 
                     type="text" 
                     className="border-2"

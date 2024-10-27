@@ -1,6 +1,6 @@
 {
-  "id": "d135e9de-f448-4726-8746-9616d02f40b5",
-  "prevId": "f8579fe3-1071-4492-aab9-9dd38d957543",
+  "id": "d282c657-7cd5-46db-a005-f4542123cbcb",
+  "prevId": "682b3858-cb9c-4dd9-9da9-c3545dcfd463",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -16,19 +16,19 @@
         },
         "size": {
           "name": "size",
-          "type": "numeric",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "pieceSize": {
           "name": "pieceSize",
-          "type": "numeric",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "noPiece": {
           "name": "noPiece",
-          "type": "numeric",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
@@ -43,11 +43,12 @@
       "name": "node",
       "schema": "",
       "columns": {
-        "port": {
-          "name": "port",
-          "type": "numeric",
+        "id": {
+          "name": "id",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "username": {
           "name": "username",
@@ -55,11 +56,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "apiPort": {
-          "name": "apiPort",
-          "type": "numeric",
+        "password": {
+          "name": "password",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},
@@ -71,13 +72,6 @@
           "nullsNotDistinct": false,
           "columns": [
             "username"
-          ]
-        },
-        "node_apiPort_unique": {
-          "name": "node_apiPort_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "apiPort"
           ]
         }
       },
@@ -94,9 +88,9 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "port": {
-          "name": "port",
-          "type": "numeric",
+        "nodeId": {
+          "name": "nodeId",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },

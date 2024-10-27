@@ -1,20 +1,19 @@
 CREATE TABLE IF NOT EXISTS "file" (
 	"name" varchar(255) PRIMARY KEY NOT NULL,
-	"size" numeric NOT NULL,
-	"pieceSize" numeric NOT NULL,
-	"noPiece" numeric NOT NULL
+	"size" integer NOT NULL,
+	"pieceSize" integer NOT NULL,
+	"noPiece" integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "node" (
-	"port" numeric PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY NOT NULL,
 	"username" varchar(255) NOT NULL,
-	"password" numeric NOT NULL,
-	CONSTRAINT "node_username_unique" UNIQUE("username"),
-	CONSTRAINT "node_password_unique" UNIQUE("password")
+	"password" varchar(255),
+	CONSTRAINT "node_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "nodeFile" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"port" numeric NOT NULL,
+	"nodeId" uuid NOT NULL,
 	"name" varchar(255) NOT NULL
 );
