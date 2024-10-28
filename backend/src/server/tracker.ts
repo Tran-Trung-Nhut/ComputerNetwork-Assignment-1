@@ -13,7 +13,7 @@ dotenv.config()
 
 class Tracker{
     private netServer: Server
-    private onlinePeers: {[id: string]: {IP: string, port: number}} = {}
+    private onlinePeers: {[id: string]: {IP: string, port: number, username: string}} = {}
 
     constructor(port: number){
         this.netServer = createServer((socket) =>{
@@ -79,7 +79,8 @@ class Tracker{
 
         this.onlinePeers[user[0].id] = {
             IP: socket.remoteAddress?.toString() || '',
-            port: socket.remotePort || -1
+            port: socket.remotePort || -1,
+            username
         }
 
         return socket.write(JSON.stringify({
@@ -98,18 +99,20 @@ class Tracker{
 
         const listPeer = await db
         .select({
-            id: nodeFile.nodeId
+            id: nodeFile.nodeId,
+            username: node.username
         })
         .from(nodeFile)
         .innerJoin(node, eq(nodeFile.nodeId, node.id))
         .where(eq(nodeFile.name, fileName))
 
-        let peerList : {IP: string, port: number}[]  = []
+        let peerList : {IP: string, port: number, username: string}[]  = []
 
         listPeer.forEach(peer => {
             peerList.push({
                 IP: this.onlinePeers[peer.id].IP,
-                port: this.onlinePeers[peer.id].port
+                port: this.onlinePeers[peer.id].port,
+                username: peer.username
             })
         });
 

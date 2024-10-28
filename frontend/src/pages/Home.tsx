@@ -8,7 +8,7 @@ import { useRecoilValue } from "recoil";
 
 export default function Home(){
     const [fileName, setFileName] = useState('')
-    const [listPeer, setListPeer] = useState<{IP: string, port: number}[]>([])
+    const [listPeer, setListPeer] = useState<{IP: string, port: number, username: string}[]>([])
     const [connectionStatus, setConnectionStatus] = useState<{ [key: string]: string }>({});
     const client = useRecoilValue(clientState)
     const ws = useRecoilValue(wsState)
@@ -83,7 +83,7 @@ export default function Home(){
             {listPeer.length !== 0 ? (
                 <ul>
                     {listPeer.map((peer, index) => (
-                        peer.port !== -1 ? (
+                        peer.username !== client.username ? (
                         <div className="flex">
                             <li key={index}>
                                 {peer.IP}:{peer.port} 
