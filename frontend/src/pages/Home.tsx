@@ -1,42 +1,59 @@
 import Login from "./Login";
 import { useState } from "react";
 import axios from "axios";
-import { clientState } from "../state";
+import { clientState, wsState } from "../state";
 import { useRecoilValue } from "recoil";
 
 
 
 export default function Home(){
     const [fileName, setFileName] = useState('')
-    const [listPort, setListPort] = useState([])
+    const [listPeer, setListPeer] = useState<{IP: string, port: number}[]>([])
     const [connectionStatus, setConnectionStatus] = useState<{ [key: string]: string }>({});
     const client = useRecoilValue(clientState)
+    const ws = useRecoilValue(wsState)
 
     const handleFindPeers = async () => {
         try{
+            if(!ws) return
             
-            
+            ws.send(JSON.stringify({
+                message: 'requestPeer',
+                fileName
+            }))
+
+            ws.onmessage = (event) => {
+                const data = event.data
+                const message = JSON.parse(data)
+
+                if(message.message === 'File name has to be filled'){
+                    return console.log(message.message)
+                }
+
+                setListPeer(message.peerList)
+            }
 
         }catch(e){
             console.log(e)
-            setListPort([])
+            setListPeer([])
         }
     }
 
-    const handleConnectButtion = async (peerPort: number) => {
+    const handleConnectButtion = async (IP: string, port: number) => {
         try{
             const response = await axios.post(`http://localhost:}/api/request-connect`,{
-                peerPort: peerPort
+                IP,
+                port
             }) 
             
             setConnectionStatus((prevStatus) => ({
                 ...prevStatus,
-                [peerPort]: "waiting",
+                [IP + ':' + port.toString()]: "waiting",
             }));
             
-            const ws = new WebSocket(`ws://localhost:`)
+            // const ws = new WebSocket(`ws://localhost2000:`)
             
-            // if(!ws) return 
+            if(!ws) return 
 
             ws.onmessage = (event) => {
                 const messageData = event.data;
@@ -45,12 +62,12 @@ export default function Home(){
                 if (data.message === "accepted") {
                     setConnectionStatus((prevStatus) => ({
                         ...prevStatus,
-                        [peerPort]: "accepted",
+                        [IP + ':' + port.toString()]: "accepted",
                     }));
                 } else {
                     setConnectionStatus((prevStatus) => ({
                         ...prevStatus,
-                        [peerPort]: "denied",
+                        [IP + ':' + port.toString()]: "denied",
                     }));
                 };
             }
@@ -63,30 +80,30 @@ export default function Home(){
 
     return(
         <div>
-            {listPort.length !== 0 ? (
+            {listPeer.length !== 0 ? (
                 <ul>
-                    {listPort.map((port, index) => (
-                        Number(port) !== 1 ? (
+                    {listPeer.map((peer, index) => (
+                        peer.port !== -1 ? (
                         <div className="flex">
                             <li key={index}>
-                                Port: {port} {/* Ví dụ sử dụng thẻ */}
+                                {peer.IP}:{peer.port} 
                             </li>
                             <button key={index} 
-                            className={`${connectionStatus[port] === 'waiting' 
-                                || connectionStatus[port] === 'accepted' 
-                                || connectionStatus[port] === 'denied' ? 'border-0' : 'border-2'} active:scale-90`}
+                            className={`${connectionStatus[peer.IP + ':' + peer.port.toString()] === 'waiting' 
+                                || connectionStatus[peer.IP + ':' + peer.port.toString()] === 'accepted' 
+                                || connectionStatus[peer.IP + ':' + peer.port.toString()] === 'denied' ? 'border-0' : 'border-2'} active:scale-90`}
                             
-                            onClick={() => handleConnectButtion(port)}
+                            onClick={() => handleConnectButtion(peer.IP, peer.port)}
                             
-                            disabled={connectionStatus[port] === 'waiting' 
-                                || connectionStatus[port] === 'accepted' 
-                                || connectionStatus[port] === 'denied'}
+                            disabled={connectionStatus[peer.IP + ':' + peer.port.toString()] === 'waiting' 
+                                || connectionStatus[peer.IP + ':' + peer.port.toString()] === 'accepted' 
+                                || connectionStatus[peer.IP + ':' + peer.port.toString()] === 'denied'}
                             >
-                                {connectionStatus[port] === "waiting"
+                                {connectionStatus[peer.IP + ':' + peer.port.toString()] === "waiting"
                                         ? "Đang chờ..."
-                                        : connectionStatus[port] === "accepted"
+                                        : connectionStatus[peer.IP + ':' + peer.port.toString()] === "accepted"
                                             ? "Kết nối thành công!"
-                                            : connectionStatus[port] === "denied"
+                                            : connectionStatus[peer.IP + ':' + peer.port.toString()] === "denied"
                                                 ? "Kết nối bị từ chối"
                                                 : "Kết nối"}
                             </button>

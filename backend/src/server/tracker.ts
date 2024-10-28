@@ -3,7 +3,6 @@ import dotenv from 'dotenv'
 import { db } from '../db/db';
 import { node, nodeFile } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { certainClient, resetCertainClient } from '../app';
 import { createServer, Server } from 'net';
 import { Socket } from 'net';
 import { networkInterfaces } from 'os'
@@ -14,14 +13,11 @@ dotenv.config()
 
 class Tracker{
     private netServer: Server
-    private peers: Socket[] = []
+    private onlinePeers: {[id: string]: {IP: string, port: number}} = {}
 
     constructor(port: number){
-        this.handleConnection()
-
         this.netServer = createServer((socket) =>{
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
-            this.peers.push(socket)
 
             socket.on('data', (data) => {
                 const message = JSON.parse(data.toString())
@@ -29,10 +25,21 @@ class Tracker{
                 if(message.message === 'login'){
                     this.verifyLogin(socket, message.username, message.password)
                 }
+
+                if(message.message === 'requestPeer'){
+                    this.requestPeers(socket, message.fileName)
+                }
             })
 
             socket.on('close', () => {
-                this.peers = this.peers.filter(peer => peer !== socket);
+                const peerIp = socket.remoteAddress;
+                const peerPort = socket.remotePort;
+
+                const peerIdToRemove = Object.keys(this.onlinePeers).find(
+                    peerId => this.onlinePeers[peerId].IP === peerIp && this.onlinePeers[peerId].port === peerPort
+                );
+
+                if(peerIdToRemove) delete this.onlinePeers[peerIdToRemove]
             });
         })
 
@@ -70,6 +77,11 @@ class Tracker{
             }))
         }
 
+        this.onlinePeers[user[0].id] = {
+            IP: socket.remoteAddress?.toString() || '',
+            port: socket.remotePort || -1
+        }
+
         return socket.write(JSON.stringify({
             message: "Login successfully",
             username: user[0].username,
@@ -77,8 +89,35 @@ class Tracker{
         }))
     }
 
-    public handleConnection = async () => {
-        
+    public requestPeers = async (socket: Socket, fileName: string) => {
+        if(fileName === ''){
+            return socket.write(JSON.stringify({
+                message: 'File name has to be filled'
+            }))
+        }
+
+        const listPeer = await db
+        .select({
+            id: nodeFile.nodeId
+        })
+        .from(nodeFile)
+        .innerJoin(node, eq(nodeFile.nodeId, node.id))
+        .where(eq(nodeFile.name, fileName))
+
+        let peerList : {IP: string, port: number}[]  = []
+
+        listPeer.forEach(peer => {
+            peerList.push({
+                IP: this.onlinePeers[peer.id].IP,
+                port: this.onlinePeers[peer.id].port
+            })
+        });
+
+        return socket.write(JSON.stringify({
+            message: 'list of peer',
+            peerList: peerList
+        }))
+
     }
 
     private getLocalIp = () : string | undefined => {

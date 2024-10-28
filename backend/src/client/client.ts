@@ -4,6 +4,7 @@ import { ClientDto } from "../dtos/client.dto";
 import dotenv from 'dotenv'
 import { app } from '../app';  
 import { WebSocket, WebSocketServer } from 'ws'
+import { networkInterfaces } from 'os';
 
 dotenv.config()
 
@@ -12,21 +13,16 @@ let client:ClientDto | null = null
 class NOde{
     private peerServer: Server
     private peerPort: number | undefined
-    private apiPort: number
     private host : string
     private acceptedPort : {[key: number]: string} = {} //dùng để xác định port nào cần file nào
     private activeWsClients: WebSocket[] = [];
 
     constructor(
-    files: string, 
     clientPort: number,
-    host: string | undefined,
-    apiPort: number,
-    wsPort: number){
+    host: string | undefined){
 
         this.peerPort = clientPort
         this.host = host || ''
-        this.apiPort = apiPort
 
         this.peerServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
@@ -59,9 +55,9 @@ class NOde{
             });
         })
         
-
+        
         //peer Server net
-        this.peerServer.listen(this.peerPort, host, () => {
+        this.peerServer.listen(this.peerPort, this.host, () => {
             console.log(`Peer in port: ${this.peerPort} is running`)
         })
 
@@ -71,6 +67,7 @@ class NOde{
 
         
     }
+
 
     private sendConnectionRequests(port: number) {
         this.broadcastMessageToClients({
@@ -153,8 +150,8 @@ class NOde{
 
 }
 
-
-const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT) | 2000})
+let port : number;
+const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT) | 2000});
 
 webServer.on('connection', (ws: WebSocket) => {
     console.log('Connected with frontend')
@@ -164,11 +161,16 @@ webServer.on('connection', (ws: WebSocket) => {
             
             const data = JSON.parse(message.toString())
             if(data.message === 'sendTrackerIp'){
+                port = Number(data.port)
                 connectToTracker(data.trackerIP, data.port)
             }
 
-            if(data.message == 'login'){
+            if(data.message === 'login'){
                 login(ws, data.username, data.password)
+            }
+
+            if(data.message === 'requestPeer'){
+                requestPeers(ws, data.fileName)
             }
         }catch(e){
             console.log(e)
@@ -176,7 +178,6 @@ webServer.on('connection', (ws: WebSocket) => {
     })
 
 })
-
 
 
 const waitingClient = new Socket()
@@ -221,18 +222,58 @@ function login (ws: WebSocket, username: string, password: string){
     })
 }
 
+function requestPeers(ws: WebSocket,fileName: string) {
+    waitingClient.write(JSON.stringify({
+        message: "requestPeer",
+        fileName: fileName
+    }))
+
+    waitingClient.on('data',(data) => {
+        const dataMessage = data.toString()
+        const message = JSON.parse(dataMessage)
+
+        if(message.message === 'File name has to be filled'){
+            ws.send(JSON.stringify({
+                message: 'File name has to be filled'
+            }))
+        }
+
+        if(message.message === 'list of peer'){
+            ws.send(JSON.stringify({
+                message: 'list of peer',
+                peerList: message.peerList
+            }))
+        }
+    })
+}
+
+const getLocalIp = () : string | undefined => {
+    const nets = networkInterfaces();
+    let localIp;
+
+    for(const name of Object.keys(nets)){
+
+        if (name.includes('Wi-Fi') || name.includes('Wireless')) {
+            for(const net of nets[name] || []){
+                if(net.family === 'IPv4' && !net.internal){
+                    localIp = net.address;
+                    break;
+                }
+            }
+
+            if(localIp) break;
+        }
+    }
+
+    return localIp
+}
+
 waitingClient.on('data', (data) => {
-    const message = data.toString();
 
-    const jsonData = JSON.parse(message);
-
-    const { fileNames, certainClient } = jsonData
-
-    client = certainClient
-
-    const port:number = Number(client?.port) || 0
-    const apiPort: number = Number(client?.apiPort) || 0
-    const wsPort: number = Number(client?.wsPort) || 0
-
-    const node = new NOde(fileNames, port, process.env.HOST, apiPort, wsPort)
+    const localIp = getLocalIp()
+    if(localIp){
+        new NOde(port, localIp)
+    }else{
+        console.log('cannot open port!')
+    }
 }); 
