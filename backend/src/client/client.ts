@@ -58,7 +58,7 @@ class NOde{
         
         //peer Server net
         this.peerServer.listen(this.peerPort, this.host, () => {
-            console.log(`Peer in port: ${this.peerPort} is running`)
+            console.log(`Peer is running at ${this.peerServer.address()}:${this.peerPort}`)
         })
 
         this.connectToPeer()
@@ -162,7 +162,7 @@ webServer.on('connection', (ws: WebSocket) => {
             const data = JSON.parse(message.toString())
             if(data.message === 'sendTrackerIp'){
                 port = Number(data.port)
-                connectToTracker(data.trackerIP, data.port)
+                connectToTracker(data.trackerIP)
             }
 
             if(data.message === 'login'){
@@ -183,11 +183,10 @@ webServer.on('connection', (ws: WebSocket) => {
 const waitingClient = new Socket()
 
 
-function connectToTracker (trackerIP: string, port: number){
+function connectToTracker (trackerIP: string){
     waitingClient.connect({
         port: Number(process.env.TRACKER_PORT), 
         host: trackerIP,
-        localPort: port
     }, () => {
         console.log(`Connected to tracker address: ${trackerIP}:${process.env.TRACKER_PORT}`);
     });

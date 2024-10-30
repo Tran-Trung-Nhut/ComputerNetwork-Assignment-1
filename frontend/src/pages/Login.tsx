@@ -124,7 +124,7 @@ export default function Login(){
                 <input 
                     type="text" 
                     className="border-2"
-                    placeholder="Nhập port của bạn"
+                    placeholder="Nhập port listen của bạn"
                     value={port}
                     onChange={(e) => setPort(e.target.value)} />
                 <input 
