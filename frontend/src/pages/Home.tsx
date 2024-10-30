@@ -41,7 +41,7 @@ export default function Home(){
 
     const handleConnectButtion = async (IP: string, port: number) => {
         try{
-            const response = await axios.post(`http://localhost:}/api/request-connect`,{
+            const response = await axios.post(`http://localhost:8040/api/request-connect`,{
                 IP,
                 port
             }) 

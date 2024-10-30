@@ -68,7 +68,7 @@ class NOde{
 
         this.requestConnectToPeer()
 
-        
+        app.listen(process.env.API_APP_PORT, () => {})
     }
 
 
@@ -90,24 +90,17 @@ class NOde{
 
     public requestConnectToPeer = () => {
         app.post('/api/request-connect', (req: Request, res: Response) =>{
-            const { peerPort } = req.body
+            const { IP, port } = req.body
 
             const client = new Socket()
 
-            client.connect(peerPort, this.host, () => {
+            client.connect(port, IP, () => {
                 const message = JSON.stringify({
                     message: 'requestConnection',
                     peerPort: this.peerPort
                 })
-                console.log(message)
-
                 client.write(message)
                 
-                client.end()
-
-                res.status(200).json({
-                    message: 'Request sent successfully',
-                });
             })
         })
     }
@@ -208,10 +201,10 @@ function getWifiIPAddress() {
             if (addr.family === 'IPv4' && !addr.internal) {
                 // Kiểm tra tên interface cho các hệ điều hành
                 if (
+                    iface.toLowerCase().includes('eth') || 
                     iface.toLowerCase().includes('wlan') ||  // Linux (Wi-Fi)
                     iface.toLowerCase().includes('wifi') ||  // Linux/Windows (Wi-Fi)
-                    iface.toLowerCase().includes('wi-fi') || // Windows (Wi-Fi)
-                    iface.toLowerCase().includes('en')       // macOS thường là "en0", "en1",...
+                    iface.toLowerCase().includes('wi-fi') // Windows (Wi-Fi)
                 ) {
                     wifiIPAddress = addr.address;
                     break;
