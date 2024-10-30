@@ -58,7 +58,10 @@ class NOde{
         
         //peer Server net
         this.peerServer.listen(this.peerPort, this.host, () => {
-            console.log(`Peer is running at ${this.peerServer.address()}:${this.peerPort}`)
+            const address = this.peerServer.address()
+            if(address && typeof address == 'object'){
+                console.log(`Server is running at ${address.address}:${address.port}`);
+            }
         })
 
         this.connectToPeer()
@@ -151,6 +154,7 @@ class NOde{
 }
 
 let port : number;
+let localIp: string;
 const webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT) | 2000});
 
 webServer.on('connection', (ws: WebSocket) => {
@@ -192,11 +196,44 @@ function connectToTracker (trackerIP: string){
     });
 }
 
+function getWifiIPAddress() {
+    const networkInterface : any = networkInterfaces();
+    let wifiIPAddress = null;
+
+    for (const iface in networkInterface) {
+        const addresses = networkInterface[iface];
+
+        for (const addr of addresses) {
+            // Chọn IPv4 và loại bỏ địa chỉ internal (localhost)
+            if (addr.family === 'IPv4' && !addr.internal) {
+                // Kiểm tra tên interface cho các hệ điều hành
+                if (
+                    iface.toLowerCase().includes('wlan') ||  // Linux (Wi-Fi)
+                    iface.toLowerCase().includes('wifi') ||  // Linux/Windows (Wi-Fi)
+                    iface.toLowerCase().includes('wi-fi') || // Windows (Wi-Fi)
+                    iface.toLowerCase().includes('en')       // macOS thường là "en0", "en1",...
+                ) {
+                    wifiIPAddress = addr.address;
+                    break;
+                }
+            }
+        }
+
+        if (wifiIPAddress) break;
+    }
+
+    return wifiIPAddress;
+}
+
+localIp = getWifiIPAddress()
+
 function login (ws: WebSocket, username: string, password: string){
     waitingClient.write(JSON.stringify({
         message: 'login',
         username: username,
-        password: password
+        password: password,
+        IP: localIp,
+        port: port
     }))
 
     waitingClient.on('data', (data) => {
@@ -246,21 +283,9 @@ function requestPeers(ws: WebSocket,fileName: string) {
     })
 }
 
-const getLocalIp = (): string | undefined => {
-    const nets = networkInterfaces();
-    for (const name of Object.keys(nets)) {
-        for (const net of nets[name] || []) {
-            if (net.family === 'IPv4' && !net.internal) {
-                return net.address;
-            }
-        }
-    }
-    return undefined;
-}
+
 
 waitingClient.on('data', (data) => {
-
-    const localIp = getLocalIp()
     if(localIp){
         new NOde(port, localIp)
     }else{

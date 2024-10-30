@@ -23,7 +23,7 @@ class Tracker{
                 const message = JSON.parse(data.toString())
                 console.log(message)
                 if(message.message === 'login'){
-                    this.verifyLogin(socket, message.username, message.password)
+                    this.verifyLogin(socket, message.username, message.password, message.IP, message.port)
                 }
 
                 if(message.message === 'requestPeer'){
@@ -53,7 +53,7 @@ class Tracker{
         }
     }
 
-    private verifyLogin = async (socket: Socket, username: string, password: string) => {
+    private verifyLogin = async (socket: Socket, username: string, password: string, IP: string, port: number) => {
         if(!username || username === '' || !password || password === ''){
             return socket.write(JSON.stringify({
                 message: "Invalid username or password"
@@ -78,10 +78,12 @@ class Tracker{
         }
 
         this.onlinePeers[user[0].id] = {
-            IP: socket.remoteAddress?.toString() || '',
-            port: socket.remotePort || -1,
+            IP: IP || '',
+            port: port || -1,
             username
         }
+
+        console.log(this.onlinePeers[user[0].id])
 
         return socket.write(JSON.stringify({
             message: "Login successfully",
