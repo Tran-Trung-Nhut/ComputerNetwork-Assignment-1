@@ -201,10 +201,10 @@ function getWifiIPAddress() {
             if (addr.family === 'IPv4' && !addr.internal) {
                 // Kiểm tra tên interface cho các hệ điều hành
                 if (
-                    iface.toLowerCase().includes('eth') || 
                     iface.toLowerCase().includes('wlan') ||  // Linux (Wi-Fi)
                     iface.toLowerCase().includes('wifi') ||  // Linux/Windows (Wi-Fi)
-                    iface.toLowerCase().includes('wi-fi') // Windows (Wi-Fi)
+                    iface.toLowerCase().includes('wi-fi') || // Windows (Wi-Fi)
+                    iface.toLowerCase().includes('en')       // macOS thường là "en0", "en1",...
                 ) {
                     wifiIPAddress = addr.address;
                     break;
