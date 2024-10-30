@@ -110,13 +110,17 @@ class Tracker{
 
         let peerList : {IP: string, port: number, username: string}[]  = []
 
-        listPeer.forEach(peer => {
-            peerList.push({
-                IP: this.onlinePeers[peer.id].IP,
-                port: this.onlinePeers[peer.id].port,
-                username: peer.username
-            })
-        });
+        if(listPeer.length > 0){
+            listPeer.forEach(peer => {
+                if(this.onlinePeers[peer.id] && this.onlinePeers[peer.id].IP){
+                    peerList.push({
+                    IP: this.onlinePeers[peer.id].IP,
+                    port: this.onlinePeers[peer.id].port,
+                    username: peer.username
+                    })
+                }
+            });
+        }
 
         return socket.write(JSON.stringify({
             message: 'list of peer',

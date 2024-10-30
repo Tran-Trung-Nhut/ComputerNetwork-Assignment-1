@@ -283,11 +283,13 @@ function requestPeers(ws: WebSocket,fileName: string) {
     })
 }
 
-
+//Lưu node để tránh trường hợp client được tạo 2 lần
+let node: NOde;
 
 waitingClient.on('data', (data) => {
-    if(localIp){
-        new NOde(port, localIp)
+    console.log('tạo ip')
+    if(localIp && !node){
+        node = new NOde(port, localIp)
     }else{
         console.log('cannot open port!')
     }
