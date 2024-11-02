@@ -1,7 +1,7 @@
 import Modal from 'react-modal'
 import { useRecoilValue, useSetRecoilState } from "recoil"
 import { isOpenAddFileTorrentState, isOpenCreateTorrentState, outputPathState, wsState } from "../state"
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 export default function AddFileTorrentPopup() {
     const isOpenAddFileTorrent = useRecoilValue(isOpenAddFileTorrentState)
@@ -9,15 +9,35 @@ export default function AddFileTorrentPopup() {
     const setIsOpenAddFileTorrent = useSetRecoilState(isOpenAddFileTorrentState)
     const ws = useRecoilValue(wsState)
 
+    useEffect(() => {
+        if(!ws) return
 
+        ws.onmessage = (event) =>{
+            const message = JSON.parse(event.data)
 
-    const handleAddTorrentFile = async () => {
+            if (message.message === 'error') {
+                if (message.failure === 'No peer has this file') {
+                    alert('Không có peer nào sở hữu tệp này');
+                    setIsOpenAddFileTorrent(false);
+                } 
+                
+                if (message.failure === 'Something went wrong, please do it again') {
+                    alert('Đã có lỗi xảy ra vui lòng thực hiện lại hành động');
+                    setIsOpenAddFileTorrent(false);
+                }
+            }
+        }
+    }, [ws])
+
+    const handleAddTorrentFile = async (event: React.FormEvent) => {
+        event.preventDefault();
         if(!ws) return
 
         ws.send(JSON.stringify({
             message: 'torrent',
             filePath: filePath
         }))
+
     }
 
     return(
@@ -64,7 +84,7 @@ export default function AddFileTorrentPopup() {
                         <button 
                         type="submit" 
                         className="bg-blue-500 text-white px-4 py-2 rounded"
-                        onClick={() => handleAddTorrentFile()}
+                        onClick={(e) => handleAddTorrentFile(e)}
                         >
                         Tải xuống
                         </button>

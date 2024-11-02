@@ -16,7 +16,17 @@ export default function CreateTorrentPopup() {
     useEffect(() => {
         // Đặt phần tử ứng dụng chính
         setFileName(getDefaultFileName())
-    }, [filePath]);
+
+        if(!ws) return
+
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data)
+
+            if(message.message === 'Create torrent successfully')
+            alert('Tạo tệp torrent thành công')
+        }
+
+    }, [filePath, ws]);
 
     const getDefaultFileName = () => {
         if(filePath === '') return '';
@@ -41,13 +51,6 @@ export default function CreateTorrentPopup() {
             name: fileAndExtension, 
             outputTorrentPath: outputPath
         }))
-
-        ws.onmessage = (event) => {
-            const message = JSON.parse(event.data)
-
-            if(message.message === 'Create torrent successfully')
-            alert('Tạo tệp torrent thành công')
-        }
     }
 
     return(

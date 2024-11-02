@@ -211,7 +211,7 @@ class NOde{
 
         socketToTracker.on('data', data => {
             const message = JSON.parse(data.toString())
-            
+
             if(message.message === 'peers'){
                 message.peers.forEach((peer: {IP: string, port: number, ID: string}) => {
                     if(peer.ID !== this.ID){
@@ -220,8 +220,12 @@ class NOde{
                 });
             }
 
-            if(message.message == 'error' && message.failure === 'No peer has this file'){
-                ws.send(message.failure)
+
+            if(message.message === 'error'){
+                ws.send(JSON.stringify({
+                    message: message.message,
+                    failure: message.failure
+                }))
             }
         })
 
