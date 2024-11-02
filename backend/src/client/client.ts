@@ -77,7 +77,7 @@ class NOde{
         })
         
         
-        //peer Server net
+        //Lắng nghe peer khác kết nối
         this.peerServer.listen(this.port, this.IP, () => {
             const address = this.peerServer.address()
             if(address && typeof address == 'object'){
@@ -89,6 +89,7 @@ class NOde{
         app.listen(process.env.API_APP_PORT, () => {})
     }
 
+    //Nhận thông điệp từ frontend
     private listenFrontend () {
         this.webServer.on('connection', (ws: WebSocket) => {
             console.log('connect with frontend')       
@@ -113,9 +114,7 @@ class NOde{
         trackerURL: string, 
         pieceLength: number,
         name: string,
-        outputTorrentPath: string) => {
-        console.log(filePaths, trackerURL, pieceLength, name, outputTorrentPath)
-        
+        outputTorrentPath: string) => {        
         const fullPath = path.resolve(outputTorrentPath);
         console.log(`Torrent file created at: ${fullPath}`);
 
@@ -212,12 +211,11 @@ class NOde{
 
         socketToTracker.on('data', data => {
             const message = JSON.parse(data.toString())
-            console.log(message.message)
             
             if(message.message === 'peers'){
-                message.peers.forEach((peer: {ip: string, port: number}) => {
-                    if(peer.ip !== this.IP || peer.port !== this.port){
-                        this.connectToPeers(peer.ip, Number(peer.port))
+                message.peers.forEach((peer: {IP: string, port: number, ID: string}) => {
+                    if(peer.ID !== this.ID){
+                        this.connectToPeers(peer.IP, Number(peer.port))
                     }
                 });
             }

@@ -19,7 +19,6 @@ class Tracker{
                 const message = JSON.parse(data.toString())
 
                 if(message.message === 'infohash of peer'){
-                    console.log(message.infoHashOfPeer)
                     this.addPeerTo(message.infoHashOfPeer, message.IP, Number(message.port), message.ID)
                 }
 
@@ -49,10 +48,8 @@ class Tracker{
         ID: string) =>{
         
         if(!infoHashOfPeer) return
-        console.log(infoHashOfPeer, IP, port, ID)
         
         infoHashOfPeer.forEach(async (infoHash: string) => {
-            console.log(infoHash)
 
             if (!this.onlinePeers[infoHash]) {
                 this.onlinePeers[infoHash] = [];
