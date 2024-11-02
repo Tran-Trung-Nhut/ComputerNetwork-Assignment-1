@@ -1,11 +1,9 @@
-    import dotenv from 'dotenv'
+import dotenv from 'dotenv'
 import { createServer, Server } from 'net';
 import { Socket } from 'net';
 import { networkInterfaces } from 'os'
 
 dotenv.config()
-
-
 
 class Tracker{
     private netServer: Server
@@ -16,7 +14,16 @@ class Tracker{
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
 
             socket.on('data', (data) => {
-                const message = JSON.parse(data.toString())
+
+                let message: any
+                try{
+                    message = JSON.parse(data.toString())
+                }catch(e){
+                    socket.write(JSON.stringify({
+                        message: 'error',
+                        failure: 'Something went wrong, please do it again'
+                    }))
+                }
 
                 if(message.message === 'infohash of peer'){
                     this.addPeerTo(message.infoHashOfPeer, message.IP, Number(message.port), message.ID)
@@ -54,7 +61,7 @@ class Tracker{
             if (!this.onlinePeers[infoHash]) {
                 this.onlinePeers[infoHash] = [];
             }
-
+            
             await this.onlinePeers[infoHash].push({
                 IP: IP,
                 port: port,
