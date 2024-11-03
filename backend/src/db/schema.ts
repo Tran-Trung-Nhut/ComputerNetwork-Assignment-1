@@ -1,10 +1,9 @@
 import { integer, numeric, pgTable, primaryKey, text, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const node = pgTable("node",{
-    port: integer('port').notNull().primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     username: varchar('username', { length: 255}).notNull().unique(),
-    apiPort: integer('apiPort').notNull().unique(),
-    wsPort: integer('wsPort').notNull().unique(),
+    password: varchar('password', {length: 255})
 })
 
 export const file = pgTable("file", {
@@ -16,6 +15,6 @@ export const file = pgTable("file", {
 
 export const nodeFile = pgTable("nodeFile",{
     id: uuid('id').defaultRandom().primaryKey(),
-    port: integer('port').notNull(),
+    nodeId: uuid('nodeId').notNull(),
     name: varchar('name',{ length: 255 }).notNull(),
 })

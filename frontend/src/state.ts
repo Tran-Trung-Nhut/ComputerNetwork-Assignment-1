@@ -4,18 +4,26 @@ export const clientState = atom({
     key: 'clientState', // unique ID (cho Recoil để quản lý)
     default: {
         username: '',
-        apiPort: -1,
-        port: -1,
-        wsPort: -1,
+        password: ''
     },
 });
 
-export const isLoggedInState = atom({
-    key: 'isLoggedInState',
-    default: false,
-});
+export const isOpenCreateTorrentState = atom<boolean>({
+    key: 'isOpenCreateTorrentState',
+    default: false
+})
 
-export const wsState = atom<WebSocket | null>({
-    key: 'ws',
+export const wsState = atom <WebSocket | null>({
+    key: 'wsState',
     default: null
+})
+
+export const outputPathState = atom<string>({
+    key: 'outputPathState',
+    default: 'repository'
+})
+
+export const isOpenAddFileTorrentState = atom<boolean>({
+    key: 'isOpenAddFileTorrentState',
+    default: false
 })

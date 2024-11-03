@@ -1,0 +1,8 @@
+.custom-sidebar{
+    border-radius: 10px;
+    max-width: 250px !important;
+    overflow: hidden;
+    z-index: -1 !important;
+}
+
+

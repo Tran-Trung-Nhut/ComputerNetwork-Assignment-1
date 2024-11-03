@@ -1,5 +1,5 @@
 {
-  "id": "f8579fe3-1071-4492-aab9-9dd38d957543",
+  "id": "682b3858-cb9c-4dd9-9da9-c3545dcfd463",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -16,19 +16,19 @@
         },
         "size": {
           "name": "size",
-          "type": "numeric",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "pieceSize": {
           "name": "pieceSize",
-          "type": "numeric",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "noPiece": {
           "name": "noPiece",
-          "type": "numeric",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
@@ -43,9 +43,9 @@
       "name": "node",
       "schema": "",
       "columns": {
-        "port": {
-          "name": "port",
-          "type": "numeric",
+        "id": {
+          "name": "id",
+          "type": "uuid",
           "primaryKey": true,
           "notNull": true
         },
@@ -57,9 +57,9 @@
         },
         "password": {
           "name": "password",
-          "type": "numeric",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},
@@ -71,13 +71,6 @@
           "nullsNotDistinct": false,
           "columns": [
             "username"
-          ]
-        },
-        "node_password_unique": {
-          "name": "node_password_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "password"
           ]
         }
       },
@@ -94,9 +87,9 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "port": {
-          "name": "port",
-          "type": "numeric",
+        "nodeId": {
+          "name": "nodeId",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },

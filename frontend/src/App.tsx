@@ -1,38 +1,30 @@
 import './App.css';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
-import Login from './pages/Login';
-import PopupRequest from './components/Popup-Request';
 import { useEffect } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { clientState, wsState } from './state';
 
 function App() {
-  // const setWs = useSetRecoilState(wsState);
-  // const client = useRecoilValue(clientState)
 
+  const ws = useRecoilValue(wsState)
+  const setWs = useSetRecoilState(wsState)
+  const setClient = useSetRecoilState(clientState)
 
-  // useEffect(() => {
-  //   if(client.wsPort === -1){
-  //     return
-  //   }
+  useEffect(() => {
+    const websocket = new WebSocket('ws://localhost:2000')
+    setWs(websocket)
 
-  //   const ws = new WebSocket(`ws://localhost:${client.wsPort}`)
-
-  //   setWs(ws)
-
-  //   return () => {
-  //     ws.close()
-  //   }
-  // }, [client, setWs])
+    return() => {
+      websocket.close()
+    }
+  }, [setWs])
 
   return (
       <Router>
         <Routes>
-          <Route path='/' element={<Login/>}/>
-          <Route path='/home' element={<Home/>}/>
+          <Route path='/' element={<Home/>}/>
         </Routes>
-        <PopupRequest/>
       </Router>
   );
 }
