@@ -10,7 +10,7 @@ dotenv.config()
 class Tracker {
     private netServer: Server
     private onlinePeers: PeerInfo[] = []
-    private infoHashList: { [infoHash: string]: PeerInfo[] } = {}
+    private infoHashList: { [infoHash: string]: PeerInfo[] } = {} //Lưu trên DB ?
 
     constructor(port: number) {
         this.netServer = createServer((socket) => {
@@ -31,7 +31,7 @@ class Tracker {
                 if (message.message === 'upload') {
                     this.addPeerTo(message.infoHash, message.IP, Number(message.port), message.ID)
                 }
-                if (message.message === 'upload') {
+                if (message.message === 'connect for downloading') {
                     console.log(`Peer IP:${message.IP}-Port:${message.port}-ID:${message.ID} connect for downloading`)
                 }
 

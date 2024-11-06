@@ -301,7 +301,7 @@ class NOde {
                         if (error) {
                             console.error('Error sending message:', error);
                         } else {
-                            console.log(`Send chunks info (chunk ${chunkInfo.start} to chunk ${chunkInfo.end}) to IP(${peer.IP}) - port (${peer.port})`);
+                            console.log(`Send chunks info (chunk list: ${chunkInfo.indexs.toString()}) to IP(${peer.IP}) - port (${peer.port})`);
                             socket.end();
                         }
                     })
