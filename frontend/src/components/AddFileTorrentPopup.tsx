@@ -38,6 +38,7 @@ export default function AddFileTorrentPopup() {
             filePath: filePath
         }))
 
+        setIsOpenAddFileTorrent(false)
     }
 
     return(

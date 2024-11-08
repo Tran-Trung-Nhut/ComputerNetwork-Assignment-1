@@ -55,6 +55,8 @@ export default function CreateTorrentPopup() {
             name: fileAndExtension, 
             outputTorrentPath: outputPath
         }))
+
+        setIsOpenCreateTorrent(false)
     }
 
     return(
