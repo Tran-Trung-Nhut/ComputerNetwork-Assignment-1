@@ -1,5 +1,5 @@
 {
-  "id": "682b3858-cb9c-4dd9-9da9-c3545dcfd463",
+  "id": "8a63f276-508b-49c8-8d5a-7f1259c7d149",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -8,28 +8,73 @@
       "name": "file",
       "schema": "",
       "columns": {
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
+        "id": {
+          "name": "id",
+          "type": "uuid",
           "primaryKey": true,
           "notNull": true
         },
-        "size": {
-          "name": "size",
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploadTime": {
+          "name": "uploadTime",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "pieceSize": {
-          "name": "pieceSize",
+        "completedFile": {
+          "name": "completedFile",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "noPiece": {
-          "name": "noPiece",
-          "type": "integer",
+        "peerID": {
+          "name": "peerID",
+          "type": "varchar(255)",
           "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "file_peerID_peer_ID_fk": {
+          "name": "file_peerID_peer_ID_fk",
+          "tableFrom": "file",
+          "tableTo": "peer",
+          "columnsFrom": [
+            "peerID"
+          ],
+          "columnsTo": [
+            "ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "file_name_unique": {
+          "name": "file_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "checkConstraints": {}
+    },
+    "public.peer": {
+      "name": "peer",
+      "schema": "",
+      "columns": {
+        "ID": {
+          "name": "ID",
+          "type": "varchar(255)",
+          "primaryKey": true,
           "notNull": true
         }
       },
@@ -39,62 +84,18 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "public.node": {
-      "name": "node",
+    "public.peerConnectPeer": {
+      "name": "peerConnectPeer",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "username": {
-          "name": "username",
+        "peerID1": {
+          "name": "peerID1",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "password": {
-          "name": "password",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "node_username_unique": {
-          "name": "node_username_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
-        }
-      },
-      "checkConstraints": {}
-    },
-    "public.nodeFile": {
-      "name": "nodeFile",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "nodeId": {
-          "name": "nodeId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
+        "peerID2": {
+          "name": "peerID2",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true

@@ -32,6 +32,10 @@ class Tracker{
                 if(message.message === 'infoHash'){
                     this.getPeerWithInfoHash(socket, message.infoHash)
                 }
+
+                if(message.message === 'Update infoHash'){
+                    this.AddInfoHashToPeer(message.infoHash, message.ID, message.IP, Number(message.port))
+                }
             })
 
             socket.on('close', () => {
@@ -46,6 +50,23 @@ class Tracker{
         }else{
             console.log('cannot open port!')
         }
+    }
+
+    private AddInfoHashToPeer = async (
+        infoHash:string,
+        ID: string,
+        IP: string,
+        port: number
+    ) => {
+        if(!this.onlinePeers[infoHash]){
+            this.onlinePeers[infoHash] = []
+        }
+
+        await this.onlinePeers[infoHash].push({
+            IP: IP,
+            port: port,
+            ID: ID
+        })
     }
 
     private addPeerTo = async (

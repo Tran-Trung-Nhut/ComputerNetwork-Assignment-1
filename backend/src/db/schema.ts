@@ -1,20 +1,20 @@
 import { integer, numeric, pgTable, primaryKey, text, uuid, varchar } from "drizzle-orm/pg-core";
 
-export const node = pgTable("node",{
-    id: uuid('id').defaultRandom().primaryKey(),
-    username: varchar('username', { length: 255}).notNull().unique(),
-    password: varchar('password', {length: 255})
+export const peer = pgTable("peer",{
+    ID: varchar('ID',{ length: 255 }).primaryKey(),
 })
 
-export const file = pgTable("file", {
-    name: varchar('name', { length: 255}).notNull().primaryKey(),
-    size: integer('size').notNull(),
-    pieceSize: integer('pieceSize').notNull(),
-    noPiece: integer('noPiece').notNull(),
+export const file = pgTable("file",{
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: varchar('name', { length: 255 }).notNull().unique(),
+    uploadTime: integer('uploadTime').notNull(),
+    completedFile: integer('completedFile').notNull(),
+    peerID: varchar('peerID', { length: 255 }).notNull().references(() => peer.ID)
 })
 
-export const nodeFile = pgTable("nodeFile",{
-    id: uuid('id').defaultRandom().primaryKey(),
-    nodeId: uuid('nodeId').notNull(),
-    name: varchar('name',{ length: 255 }).notNull(),
-})
+export const peerConnectPeer = pgTable("peerConnectPeer",{
+    peerID1: varchar('peerID1', { length: 255 }).notNull(),
+    peerID2: varchar('peerID2', { length: 255 }).notNull()
+},() => ({
+    primaryKey: ['peerID1', 'peerID2']
+}))

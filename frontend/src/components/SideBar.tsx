@@ -5,9 +5,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link, useNavigate } from "react-router-dom";
 import { faCog, faDownload, faHome, faUserFriends } from "@fortawesome/free-solid-svg-icons";
 import "./SideBar.css"
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { isOpenSettingState } from "../state";
 
 export default function SideBar(){
-
+    const isOpenSetting = useRecoilValue(isOpenSettingState)
+    const setIsOpenSetting = useSetRecoilState(isOpenSettingState)
     const navigate = useNavigate()
 
     const items: MenuItem[] = [
@@ -15,7 +18,7 @@ export default function SideBar(){
             template: (
                 <button 
                 className="flex items-center space-x-2 mt-2 ml-2 hover:bg-gray-200 w-[230px] active:scale-90"
-                onClick={() => navigate('/')}>
+                onClick={() => navigate('/home')}>
                     <FontAwesomeIcon icon={faHome} />
                     <span>Trang chính</span>
                 </button>
@@ -25,7 +28,7 @@ export default function SideBar(){
             template: (
                 <button 
                 className="flex items-center space-x-2 mt-2 ml-2 hover:bg-gray-200 w-[230px] active:scale-90"
-                onClick={() => navigate('/download')}>
+                onClick={() => navigate('/history')}>
                     <FontAwesomeIcon icon={faDownload} />
                     <span>Tải xuống</span>
                 </button>
@@ -33,7 +36,9 @@ export default function SideBar(){
         },
         {
             template: (
-                <button className="flex items-center space-x-2 mt-2 ml-2 hover:bg-gray-200 w-[230px] active:scale-90">
+                <button 
+                className="flex items-center space-x-2 mt-2 ml-2 hover:bg-gray-200 w-[230px] active:scale-90"
+                onClick={() => navigate('/peers')}>
                     <FontAwesomeIcon icon={faUserFriends} />
                     <span>Peers</span>
                 </button>
@@ -41,7 +46,13 @@ export default function SideBar(){
         },
         {
             template: (
-                <button className="flex items-center space-x-2 mt-2 ml-2 hover:bg-gray-200 w-[230px] active:scale-90">
+                <button 
+                className="flex items-center space-x-2 mt-2 ml-2 hover:bg-gray-200 w-[230px] active:scale-90"
+                onClick={() => {
+                    setIsOpenSetting(!isOpenSetting)
+                    console.log(isOpenSetting)
+                }}
+                >
                     <FontAwesomeIcon icon={faCog} style={{color: 'gray'}}/>
                     <span>Cài đặt</span>
                 </button>
