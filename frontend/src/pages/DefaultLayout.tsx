@@ -61,8 +61,13 @@ export default function DefaultLayout(){
             </div>
 
             {/* Main content */}
-            <div className={`flex-grow flex ${location.pathname === '/home'? 'items-center justify-center p-4' : 'items-start justify-start'} overflow-auto`}>                    
+            <div className={`flex-grow flex ${location.pathname === '/home' || location.pathname === '/'? 'items-center justify-center p-4' : 'items-start justify-start'} overflow-auto`}>                    
                 <Outlet />
+                {location.pathname === '/' && (
+                    <p className="font-mono text-6xl font-bold">
+                        <i>Welcome to NPBT</i>
+                    </p>
+                )}
             </div>
         </div>
         {isOpenAddFileTorrent && <AddFileTorrentPopup />}
