@@ -7,9 +7,6 @@ import { WebSocket, WebSocketServer } from 'ws'
 import { networkInterfaces } from 'os';
 import { hostname, arch, platform } from 'os';
 import crypto from 'crypto';
-import { db } from '../db/db';
-import { file, peer, peerConnectPeer } from '../db/schema';
-import { and, eq, or } from 'drizzle-orm';
 import { FileDto } from '../dtos/file.dto';
 
 const generatePeerID = (): string => {
@@ -61,6 +58,9 @@ class NOde{
     private ID : string | undefined
     private torrentDir: string = 'repository'
     private downloadOutput: string = 'repository'
+    private storageDir: string = 'localStorage'
+    private localStoragePeer: string
+    private localStorageFile: string
     private peerServer: Server
     private socketToTracker: Socket = new Socket()
     private socketToPeers: Set<Socket> = new Set()
@@ -77,9 +77,11 @@ class NOde{
         this.port = clientPort
         this.IP = IP || ''
         this.ID = ID
+        this.localStoragePeer = this.ID + '-peer.json'
+        this.localStorageFile = this.ID + '-file.json'
+
 
         this.checkPeerDatabase()
-
 
         this.listenFrontend()
 
@@ -107,61 +109,81 @@ class NOde{
     private checkPeerDatabase = async () => {
         if(!this.ID) return
 
-        const existPeer = await db
-        .select()
-        .from(peer)
-        .where(eq(peer.ID, this.ID))
+        fs.readdir(this.storageDir, (err, files) => {
+            if(err){
+                console.log('Error in storage')
+                return
+            }
 
-        if(!existPeer || existPeer.length > 0) return
+            if(!files.includes(this.localStoragePeer)){
 
-        await db
-        .insert(peer)
-        .values({
-            ID: this.ID
+                const filePath = path.join(this.storageDir, this.localStoragePeer);
+
+                fs.writeFile(filePath, '', (err) => {
+                    if (err) {
+                        console.error('Error in create storage', err);
+                        return;
+                    }
+                });
+            }
+
+            if(!files.includes(this.localStorageFile)){
+
+                const filePath = path.join(this.storageDir, this.localStorageFile);
+
+                fs.writeFile(filePath, '', (err) => {
+                    if (err) {
+                        console.error('Error in create storage', err);
+                        return;
+                    }
+                });
+            }
         })
     }
 
     private initialize = async ( ) => {
         this.fileSeeding = await this.getFileSeeding();
-        this.connectedPeer = await this.getConnectedPeers();
+        this.connectedPeer = await this.getPeersFromFile();
     }
 
-    private getConnectedPeers = async () => {
+    private getPeersFromFile = async () => {
         if(!this.ID) return []
         const connected: {ID: string, status: string}[] = []
 
         try{
-            const peers = await db
-            .select()
-            .from(peerConnectPeer)
-            .where(or(eq(peerConnectPeer.peerID1, this.ID),eq(peerConnectPeer.peerID2, this.ID)))
 
-            if(peers.length === 0) return []
+            const peers = await this.loadFromFile(this.localStoragePeer)
+
+            if(!peers) return []
 
             for(const peer of peers){
-                if(peer.peerID1 === this.ID){
-                    await connected.push({
-                        ID: peer.peerID2,
-                        status: 'off'
-                    })
-                }
-
-                if(peer.peerID1 === this.ID){
-                    await connected.push({
-                        ID: peer.peerID2,
-                        status: 'off'
-                    })
-                }
+                await this.connectedPeer.push({
+                    ID: peer.ID,
+                    status: 'offline'
+                })
             }
         }catch(e){
-
+            console.log(e)
         }
         return connected
+    }
+
+    private loadFromFile = async(filePath: string) => {
+        if(!fs.existsSync(filePath)) return []
+
+        const data = fs.readFileSync(filePath, 'utf8')
+
+        return JSON.parse(data)
+    }
+
+    private loadToFile = async (filePath: string, data: any) => {
+        fs.writeFileSync(filePath, JSON.stringify(data), 'utf-8')
     }
 
     private getFileSeeding = async ():Promise<FileDto[]> => {
         const torrentFiles: string[] = []
         const fileSeedings: FileDto[] = []
+        const db = await this.loadFromFile(this.localStorageFile)
 
         const files = fs.readdirSync(this.torrentDir)
         
@@ -179,46 +201,35 @@ class NOde{
                     try{
                         if(!this.ID) break
 
-                    const existFile = await db
-                    .select({
-                        name: file.name,
-                        uploadTime: file.uploadTime,
-                        completedFile: file.completedFile,
-                        peerID: file.peerID
-                    })
-                    .from(file)
-                    .where(and(eq(file.peerID, this.ID), eq(file.name,f)))
+                        let exist: boolean = false
 
-                    if(!existFile || existFile.length === 0){
-                        const newFile = await db
-                        .insert(file)
-                        .values({
-                            name: f,
-                            uploadTime: 0,
-                            completedFile: 100,
-                            peerID: this.ID
-                        })
-                        .returning({
-                            name: file.name,
-                            uploadTime: file.uploadTime,
-                            completedFile: file.completedFile,
-                            peerID: file.peerID
-                        })
-
-                        if(!newFile || newFile.length === 0){
-                            console.log('error create new file to database')
-                            break
+                        for(const record of db){
+                            if(record.name === f){
+                                fileSeedings.push({
+                                    name: record.name,
+                                    completedFile: record.completedFile,
+                                    uploadTime: record.uploadTime
+                                })
+                                exist = true
+                                break
+                            }
                         }
-                        await fileSeedings.push(newFile[0])
-                    }else{
-                        fileSeedings.push(existFile[0])
-                    }
+
+                        if(!exist){
+                            fileSeedings.push({
+                                name: f,
+                                uploadTime: 0,
+                                completedFile: 100
+                            })
+                        }
+                    
                     }catch(e){
-                        // console.log(e)
+                        console.log(e)
                     }
                 }
             }
         }
+        await this.loadToFile(path.join(this.storageDir, this.localStorageFile), fileSeedings)
 
         return fileSeedings
     }
@@ -284,36 +295,24 @@ class NOde{
                 }
 
                 if(filePaths.includes(fullPath) && this.ID){
-                    try{
-                        await db
-                        .insert(file)
-                        .values({
-                            name: name,
-                            uploadTime: 0,
-                            completedFile: 100,
-                            peerID: this.ID
-                        })
-                        .returning({
-                            name: file.name,
-                            uploadTime: file.uploadTime,
-                            completedFile: file.completedFile,
-                            peerID: file.peerID
-                        })
+                    this.fileSeeding.push({
+                        name: name,
+                        uploadTime: 0,
+                        completedFile: 100,
+                    })
 
-                        if(this.socketToTracker.connecting ) {
-                            const torrentJSON = await parseTorrent(torrent)   
-                            
-                            this.socketToTracker.write(JSON.stringify({
-                                message: 'Update infoHash',
-                                infoHash: torrentJSON.infoHash,
-                                ID: this.ID,
-                                IP: this.IP,
-                                port: this.port,
-                            }))
-                        }
+                    await this.loadToFile(path.join(this.storageDir,this.localStorageFile), this.fileSeeding)
 
-                    }catch(e){
-                        //
+                    if(this.socketToTracker.connecting ) {
+                        const torrentJSON = await parseTorrent(torrent)   
+                        
+                        this.socketToTracker.write(JSON.stringify({
+                            message: 'Update infoHash',
+                            infoHash: torrentJSON.infoHash,
+                            ID: this.ID,
+                            IP: this.IP,
+                            port: this.port,
+                        }))
                     }
                 }
                 
@@ -409,7 +408,7 @@ class NOde{
             if(message.message === 'peers'){
                 message.peers.forEach((peer: {IP: string, port: number, ID: string}) => {
                     if(peer.ID !== this.ID){
-                        this.connectToPeers(peer.IP, Number(peer.port))
+                        this.connectToPeers(ws, peer.IP, Number(peer.port))
                     }
                 });
             }
@@ -425,7 +424,7 @@ class NOde{
 
     }
 
-    public connectToPeers = (IP: string, port: number) => {
+    public connectToPeers = (ws: WebSocket, IP: string, port: number) => {
         const socketToPeer = new Socket()
 
         socketToPeer.connect(port, IP, () => {
@@ -436,7 +435,7 @@ class NOde{
                 const message = JSON.parse(data.toString())
 
                 if(message.message === 'ID of server peer'){
-                    this.insertPeerConnectPeerDB(message.ID)
+                    this.insertPeerConnectPeerDB(ws, message.ID)
                 }
             })
 
@@ -446,40 +445,36 @@ class NOde{
         })
     }
 
-    private insertPeerConnectPeerDB = async (ID: string) => {
-        if(!this.ID) return 
+    private insertPeerConnectPeerDB = async (ws: WebSocket, ID: string) => {
         
         try{
-            const exist = await db
-            .select()
-            .from(peerConnectPeer)
-            .where(or(
-                and(eq(peerConnectPeer.peerID1,this.ID), eq(peerConnectPeer.peerID2,ID)),
-                and(eq(peerConnectPeer.peerID1,ID), eq(peerConnectPeer.peerID2,this.ID))))
+            for(let peer of this.connectedPeer){
+                if(peer.ID === ID){
+                    peer.status = 'online'
 
-            if(exist.length > 0 || exist) {
-                for(let peer of this.connectedPeer){
-                    if(peer.ID === ID){
-                        peer.status = 'online'
-                        return
-                    }
+                    ws.send(JSON.stringify({
+                        message: 'Update connectedPeer',
+                        connectedPeer: this.connectedPeer
+                    }))
+                    
+                    return
                 }
             }
 
-            await this.connectedPeer.push({
+            this.connectedPeer.push({
                 ID: ID,
                 status: 'online'
             })
 
-            return await db
-            .insert(peerConnectPeer)
-            .values({
-                peerID1: this.ID,
-                peerID2: ID
-            })
+            ws.send(JSON.stringify({
+                message: 'Update connectedPeer',
+                connectedPeer: this.connectedPeer
+            }))
+
+            this.loadToFile(path.join(this.storageDir,this.localStoragePeer), this.connectedPeer)
 
         }catch(e){
-
+            console.log(e)
         }
     }
 }

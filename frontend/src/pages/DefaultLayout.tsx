@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { connectedPeerState, fileSeedingState, isOpenAddFileTorrentState, isOpenCreateTorrentState, isOpenSettingState, wsState } from "../state";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import Header from "../components/Header";
 import SideBar from "../components/SideBar";
 import { Outlet, useLocation } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFileDownload, faFileText } from "@fortawesome/free-solid-svg-icons";
 import CreateTorrentPopup from "../components/CreateTorrentPopup";
 import AddFileTorrentPopup from "../components/AddFileTorrentPopup";
 import SettingPopup from "../components/SettingPopup";
@@ -41,6 +39,10 @@ export default function DefaultLayout(){
             console.log(message)
             if(message.message === 'initialize'){
                 setFileSeeding(message.infoHashOfPeer)
+                setConnectedPeer(message.connectedPeer)
+            }
+
+            if(message.message === 'Update connectedPeer'){
                 setConnectedPeer(message.connectedPeer)
             }
         }

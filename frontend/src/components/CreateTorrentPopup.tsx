@@ -1,7 +1,7 @@
 import Modal from 'react-modal'
 import { useRecoilValue, useSetRecoilState } from "recoil"
 import { isOpenCreateTorrentState, outputPathState, wsState } from "../state"
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 export default function CreateTorrentPopup() {
     const isOpenCreateTorrent = useRecoilValue(isOpenCreateTorrentState)
@@ -22,8 +22,11 @@ export default function CreateTorrentPopup() {
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data)
 
-            if(message.message === 'Create torrent successfully')
-            alert('Tạo tệp torrent thành công')
+            if(message.message === 'Create torrent successfully'){
+                alert('Tạo tệp torrent thành công')
+                setIsOpenCreateTorrent(false)
+                window.location.reload()
+            }
         }
 
     }, [filePath, ws]);
@@ -38,7 +41,8 @@ export default function CreateTorrentPopup() {
         return fileNameRaw[0]
     }
 
-    const handleCreateTorrentFile = async () => {
+    const handleCreateTorrentFile = async (e: React.FormEvent) => {
+        e.preventDefault()
         if(!ws) return
 
         const fileAndExtension: string = fileName + '.torrent'
@@ -122,7 +126,7 @@ export default function CreateTorrentPopup() {
                     <button 
                     type="submit" 
                     className="bg-blue-500 text-white px-4 py-2 rounded"
-                    onClick={() => handleCreateTorrentFile()}
+                    onClick={(e) => handleCreateTorrentFile(e)}
                     >
                     Tạo
                     </button>
