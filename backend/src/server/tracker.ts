@@ -18,6 +18,18 @@ class Tracker{
                 let message: any
                 try{
                     message = JSON.parse(data.toString())
+                    
+                    if(message.message === 'infohash of peer'){
+                        this.addPeerTo(message.infoHashOfPeer, message.IP, Number(message.port), message.ID)
+                    }
+    
+                    if(message.message === 'infoHash'){
+                        this.getPeerWithInfoHash(socket, message.infoHash)
+                    }
+    
+                    if(message.message === 'Update infoHash'){
+                        this.AddInfoHashToPeer(message.infoHash, message.ID, message.IP, Number(message.port))
+                    }
                 }catch(e){
                     socket.write(JSON.stringify({
                         message: 'error',
@@ -25,17 +37,6 @@ class Tracker{
                     }))
                 }
 
-                if(message.message === 'infohash of peer'){
-                    this.addPeerTo(message.infoHashOfPeer, message.IP, Number(message.port), message.ID)
-                }
-
-                if(message.message === 'infoHash'){
-                    this.getPeerWithInfoHash(socket, message.infoHash)
-                }
-
-                if(message.message === 'Update infoHash'){
-                    this.AddInfoHashToPeer(message.infoHash, message.ID, message.IP, Number(message.port))
-                }
             })
 
             socket.on('close', () => {

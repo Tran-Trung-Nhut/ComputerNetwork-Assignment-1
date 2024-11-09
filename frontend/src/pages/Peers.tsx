@@ -73,8 +73,17 @@ export default function Peers(){
                 <tbody>
                     {connectedPeer.map((peer, index) => (
                         <tr key={index} className="hover:bg-gray-200 h-14">
-                            <td className="border-b border-gray-300 px-4 py-2 text-center">{peer.ID}</td>
-                            <td className="border-b border-gray-300 px-4 py-2 text-center">{peer.lastConnect.toISOString()}</td>
+                            <td className="border-b border-gray-300 px-4 py-2 text-center" style={{ whiteSpace: 'pre-wrap' }}>
+                                {peer.ID ? (peer.ID.match(/.{1,24}/g)?.join('\n') || peer.ID) : ''}
+                            </td>
+                            <td className="border-b border-gray-300 px-4 py-2 text-center">
+                            {new Date(peer.lastConnect).toLocaleDateString('vi-VN', {
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long',   
+                                day: 'numeric'   
+                            })} - {new Date(peer.lastConnect).toLocaleTimeString('vi-VN')}
+                            </td>
                             <td className="border-b border-gray-300 px-4 py-2 text-center">{peer.status === 'offline'? 'Không trực tuyến' : 'Đang kết nối'}</td>
                             <td className="border-b border-gray-300 px-4 py-2 text-center" >
                                 {peer.status === 'online' && (

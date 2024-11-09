@@ -164,7 +164,7 @@ class NOde{
                 })
             }
         }catch(e){
-            console.log(e)
+            console.log('fail 3')
         }
         return connected
     }
@@ -174,7 +174,9 @@ class NOde{
 
         const data = fs.readFileSync(filePath, 'utf8')
 
-        return JSON.parse(data)
+        const message = JSON.parse(data)
+
+        return message
     }
 
     private loadToFile = async (filePath: string, data: any) => {
@@ -225,7 +227,7 @@ class NOde{
                         }
                     
                     }catch(e){
-                        console.log(e)
+                        console.log('fail 1')
                     }
                 }
             }
@@ -396,7 +398,7 @@ class NOde{
                         
                         torrentFileInfos.push(torrent.infoHash);
                     } catch (e) {
-                        console.log(e);
+                        console.log('fail 1');
                     }
                     break
                 }
@@ -484,7 +486,7 @@ class NOde{
 
             this.loadToFile(path.join(this.storageDir,this.localStoragePeer), this.connectedPeer)
         }catch(e){
-            console.log(e)
+            console.log('fail 2')
         }
     }
 }
