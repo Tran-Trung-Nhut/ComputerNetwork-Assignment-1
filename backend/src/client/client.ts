@@ -176,14 +176,23 @@ class NOde{
         return connected
     }
 
-    private loadFromFile = async(filePath: string) => {
-        if(!fs.existsSync(filePath)) return []
+    private loadFromFile = async (filePath: string) => {
+        if (!fs.existsSync(filePath)) return []
 
         const data = fs.readFileSync(filePath, 'utf8')
 
-        const message = JSON.parse(data)
+        if (!data.trim()) {
+            console.log('File is empty or only contains whitespace')
+            return []
+        }
 
-        return message
+        try {
+            const message = JSON.parse(data)
+            return message
+        } catch (error) {
+            console.log('Failed to parse JSON:', error)
+            return []  // Return an empty array or handle it as necessary
+        }
     }
 
     private loadToFile = async (filePath: string, data: any) => {
