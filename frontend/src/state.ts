@@ -1,5 +1,6 @@
 import { atom } from 'recoil';
 import { FileDto } from './dtos/file.dto';
+import { PeerDto } from './dtos/peer.dto';
 
 export const clientState = atom({
     key: 'clientState', // unique ID (cho Recoil để quản lý)
@@ -39,7 +40,7 @@ export const fileSeedingState = atom<FileDto[]>({
     default: []
 })
 
-export const connectedPeerState = atom<{ID: string, status: string}[]>({
+export const connectedPeerState = atom<PeerDto[]>({
     key: 'connectedPeerState',
     default: []
 })

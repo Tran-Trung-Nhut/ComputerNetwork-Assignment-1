@@ -24,8 +24,6 @@ export default function CreateTorrentPopup() {
 
             if(message.message === 'Create torrent successfully'){
                 alert('Tạo tệp torrent thành công')
-                setIsOpenCreateTorrent(false)
-                window.location.reload()
             }
         }
 

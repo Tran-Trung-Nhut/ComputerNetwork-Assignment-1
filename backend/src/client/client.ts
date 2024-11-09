@@ -8,6 +8,7 @@ import { networkInterfaces } from 'os';
 import { hostname, arch, platform } from 'os';
 import crypto from 'crypto';
 import { FileDto } from '../dtos/file.dto';
+import { PeerDto } from '../dtos/peer.dto';
 
 const generatePeerID = (): string => {
     const deviceInfo = `${hostname()}-${arch()}-${platform()}`;
@@ -68,7 +69,7 @@ class NOde{
     private IP : string
     private webServer : WebSocketServer = new WebSocketServer({ port: Number(process.env.WEBSOCKET_PORT) | 2000});
     private fileSeeding: FileDto[] = []
-    private connectedPeer: {ID: string, status: string}[] = []
+    private connectedPeer: PeerDto[] = []
 
     constructor(
     clientPort: number,
@@ -146,20 +147,20 @@ class NOde{
         this.connectedPeer = await this.getPeersFromFile();
     }
 
-    private getPeersFromFile = async () => {
+    private getPeersFromFile = async ():Promise<PeerDto[]> => {
         if(!this.ID) return []
-        const connected: {ID: string, status: string}[] = []
+        const connected: PeerDto[] = []
 
         try{
 
-            const peers = await this.loadFromFile(this.localStoragePeer)
-
+            const peers = await this.loadFromFile(path.join(this.storageDir,this.localStoragePeer))
             if(!peers) return []
 
             for(const peer of peers){
-                await this.connectedPeer.push({
+                await connected.push({
                     ID: peer.ID,
-                    status: 'offline'
+                    status: 'offline',
+                    lastConnect: peer.lastConnect
                 })
             }
         }catch(e){
@@ -239,12 +240,6 @@ class NOde{
         this.webServer.on('connection', async (ws: WebSocket) => {
             await this.initialize()
             console.log('connect with frontend')     
-            
-            ws.send(JSON.stringify({
-                message: 'initialize',
-                infoHashOfPeer: this.fileSeeding,
-                connectedPeer: this.connectedPeer
-            }))  
 
             ws.on('message',(message) => {
                 const data = JSON.parse(message.toString())
@@ -259,6 +254,21 @@ class NOde{
 
                 if(data.messgae === 'change downloadOutput'){
                     this.downloadOutput = data.downloadOutput
+                }
+
+                if(data.message === 'refresh Files'){
+                    ws.send(JSON.stringify({
+                        message:  'refresh Files',
+                        fileSeeding: this.fileSeeding
+                    }))
+                }
+
+                
+                if(data.message === 'refresh Peers'){
+                    ws.send(JSON.stringify({
+                        message:  'refresh Peers',
+                        connectedPeer: this.connectedPeer
+                    }))
                 }
             })
         
@@ -461,9 +471,10 @@ class NOde{
                 }
             }
 
-            this.connectedPeer.push({
+            await this.connectedPeer.push({
                 ID: ID,
-                status: 'online'
+                status: 'online',
+                lastConnect: new Date()
             })
 
             ws.send(JSON.stringify({
@@ -472,7 +483,6 @@ class NOde{
             }))
 
             this.loadToFile(path.join(this.storageDir,this.localStoragePeer), this.connectedPeer)
-
         }catch(e){
             console.log(e)
         }
