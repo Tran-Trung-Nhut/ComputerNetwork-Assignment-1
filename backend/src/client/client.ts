@@ -149,6 +149,9 @@ class NOde{
 
     private getPeersFromFile = async ():Promise<PeerDto[]> => {
         if(!this.ID) return []
+
+        if(this.connectedPeer.length > 0) return this.connectedPeer
+        
         const connected: PeerDto[] = []
 
         try{
