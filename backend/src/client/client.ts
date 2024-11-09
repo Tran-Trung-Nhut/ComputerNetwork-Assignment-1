@@ -143,8 +143,12 @@ class NOde{
     }
 
     private initialize = async ( ) => {
-        this.fileSeeding = await this.getFileSeeding();
-        this.connectedPeer = await this.getPeersFromFile();
+        try {
+            this.fileSeeding = await this.getFileSeeding();
+            this.connectedPeer = await this.getPeersFromFile();
+        } catch (error) {
+            console.error("Error initializing node:", error);
+        }
     }
 
     private getPeersFromFile = async ():Promise<PeerDto[]> => {
@@ -347,9 +351,12 @@ class NOde{
             }
 
         
-            const torrent = parseTorrent(data);    
-            
-            this.connectToTracker(ws, torrent.announce[0], torrent)
+            try {
+                const torrent = parseTorrent(data); 
+                this.connectToTracker(ws, torrent.announce[0], torrent);
+            } catch (parseError) {
+                console.error('Error parsing torrent data', parseError);
+            }
         })
 
     }
@@ -357,20 +364,22 @@ class NOde{
     private  connectToTracker = async (ws:WebSocket, tracker: string, torrent: any) =>{
         const [ip, port] = tracker.split(':')
 
-        this.socketToTracker.connect({
-            port: Number(port), 
-            host: ip,
-        }, async () => {
-            const infoHashOfPeer = await this.getInfoHashOfPeer()
+        if (!this.socketToTracker.destroyed && !this.socketToTracker.connecting) {
+            this.socketToTracker.connect({ port: Number(port), host: ip }, async () => {
+                const infoHashOfPeer = await this.getInfoHashOfPeer()
 
-            this.socketToTracker.write(JSON.stringify({
-                message: 'infohash of peer',
-                infoHashOfPeer: infoHashOfPeer,
-                IP: this.IP,
-                port: this.port,
-                ID: this.ID
-            }))
-        });
+                this.socketToTracker.write(JSON.stringify({
+                    message: 'infohash of peer',
+                    infoHashOfPeer: infoHashOfPeer,
+                    IP: this.IP,
+                    port: this.port,
+                    ID: this.ID
+                }))
+            });
+        } else {
+            console.log("Socket already connected or connecting.");
+        }
+
 
         this.getPeersFromTrackerAndConnect(ws, this.socketToTracker, torrent)
     }
@@ -381,11 +390,11 @@ class NOde{
 
         const files = fs.readdirSync(this.torrentDir)
         
-        await files.forEach(async file => {
+        for(const file of files) {
             if(file.endsWith('.torrent')){
                 torrentFiles.push(file)
             }
-        })
+        }
 
         torrentFiles.forEach(async torrentFile => {
             for(const file of files) {
@@ -455,6 +464,7 @@ class NOde{
             })
 
             socketToPeer.on('end', () => {
+                socketToPeer.removeAllListeners();
                 this.socketToPeers.delete(socketToPeer)
             })
         })
