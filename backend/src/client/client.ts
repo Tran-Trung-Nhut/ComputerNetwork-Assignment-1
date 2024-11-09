@@ -151,7 +151,7 @@ class NOde{
         if(!this.ID) return []
 
         if(this.connectedPeer.length > 0) return this.connectedPeer
-        
+
         const connected: PeerDto[] = []
 
         try{
@@ -257,7 +257,7 @@ class NOde{
                     this.createFileTorrent(ws, data.filePath, data.trackerURL, Number(data.pieceLength), data.name, data.outputTorrentPath)
                 }
 
-                if(data.messgae === 'change downloadOutput'){
+                if(data.message === 'change downloadOutput'){
                     this.downloadOutput = data.downloadOutput
                 }
 
