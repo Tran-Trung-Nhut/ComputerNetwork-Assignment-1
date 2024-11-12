@@ -41,9 +41,14 @@ export default function DefaultLayout(){
             <div className={`flex-grow flex ${location.pathname === '/home' || location.pathname === '/'? 'items-center justify-center p-4' : 'items-start justify-start'} overflow-auto`}>                    
                 <Outlet />
                 {location.pathname === '/' && (
-                    <p className="font-mono text-6xl font-bold">
-                        <i>Welcome to NPBT</i>
-                    </p>
+                    <div className="flex-col font-mono items-center">
+                        <p className="text-center text-5xl">
+                            <i>Chào mừng đến với </i>
+                        </p>
+                        <p className="text-center text-6xl font-bold">
+                            <i>MultiTrans</i>
+                        </p>
+                    </div>
                 )}
             </div>
         </div>

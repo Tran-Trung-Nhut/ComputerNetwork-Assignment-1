@@ -2,13 +2,13 @@ import { createServer, Server, Socket } from 'net'
 import fs from 'fs'
 import path from 'path'
 import dotenv from 'dotenv'
-import { app } from '../app';  
+import { app } from './app';  
 import { WebSocket, WebSocketServer } from 'ws'
 import { networkInterfaces } from 'os';
 import { hostname, arch, platform } from 'os';
 import crypto from 'crypto';
-import { FileDto } from '../dtos/file.dto';
-import { PeerDto } from '../dtos/peer.dto';
+import { FileDto } from './dtos/file.dto';
+import { PeerDto } from './dtos/peer.dto';
 
 const generatePeerID = (): string => {
     const deviceInfo = `${hostname()}-${arch()}-${platform()}`;
