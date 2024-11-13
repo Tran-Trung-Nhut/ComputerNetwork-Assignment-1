@@ -7,6 +7,7 @@ import { faCog, faDownload, faHome, faUserFriends } from "@fortawesome/free-soli
 import "./SideBar.css"
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { isOpenSettingState } from "../state";
+import logo from "../assets/logo.png"
 
 export default function SideBar(){
     const isOpenSetting = useRecoilValue(isOpenSettingState)
@@ -63,10 +64,11 @@ export default function SideBar(){
     return(
         <Sidebar 
         visible={true} 
-        maskClassName="custom-sidebar bg-white shadow mt-[80px]"
+        maskClassName="custom-sidebar bg-white shadow mt-[80px] font-mono"
         showCloseIcon={false}
         onHide={() => {}} 
         style={{ width: '250px', border: "2px solid #ccc"}}>
+            <p className="text-center font-bold text-xl">Công cụ quản lí</p>
             <Menu 
             model={items}  
             className="bg-white"/>

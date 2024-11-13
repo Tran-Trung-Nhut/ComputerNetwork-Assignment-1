@@ -48,6 +48,9 @@ export default function DefaultLayout(){
                         <p className="text-center text-6xl font-bold">
                             <i>MultiTrans</i>
                         </p>
+                        <p className="text-center text-4xl">
+                            <i>Ứng dụng truyền tệp hàng đầu thị trường</i>
+                        </p>
                     </div>
                 )}
             </div>
