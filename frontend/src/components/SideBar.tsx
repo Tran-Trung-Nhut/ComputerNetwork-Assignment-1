@@ -2,12 +2,12 @@ import { MenuItem } from "primereact/menuitem"
 import { Sidebar } from "primereact/sidebar";
 import { Menu } from "primereact/menu";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { faCog, faDownload, faHome, faUserFriends } from "@fortawesome/free-solid-svg-icons";
 import "./SideBar.css"
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { isOpenSettingState } from "../state";
-import logo from "../assets/logo.png"
+
 
 export default function SideBar(){
     const isOpenSetting = useRecoilValue(isOpenSettingState)
