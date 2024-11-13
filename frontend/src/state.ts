@@ -1,4 +1,6 @@
 import { atom } from 'recoil';
+import { FileDto } from './dtos/file.dto';
+import { PeerDto } from './dtos/peer.dto';
 
 export const clientState = atom({
     key: 'clientState', // unique ID (cho Recoil để quản lý)
@@ -26,4 +28,19 @@ export const outputPathState = atom<string>({
 export const isOpenAddFileTorrentState = atom<boolean>({
     key: 'isOpenAddFileTorrentState',
     default: false
+})
+
+export const isOpenSettingState = atom<boolean>({
+    key: 'isOpenSettingState',
+    default: false
+})
+
+export const fileSeedingState = atom<FileDto[]>({
+    key: 'fileSeedingState',
+    default: []
+})
+
+export const connectedPeerState = atom<PeerDto[]>({
+    key: 'connectedPeerState',
+    default: []
 })
