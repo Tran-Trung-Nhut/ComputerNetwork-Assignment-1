@@ -14,7 +14,9 @@
     "studio": "drizzle-kit studio"
   },
   "nodemonConfig": {
-    "ignore": ["localStorage/*"]
+    "ignore": [
+      "localStorage/*"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -41,6 +43,7 @@
     "nodemon": "^3.1.7",
     "parse-torrent": "^5.8.0",
     "pg": "^8.13.0",
+    "winston": "^3.17.0",
     "ws": "^8.18.0"
   }
 }

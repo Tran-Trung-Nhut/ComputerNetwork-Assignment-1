@@ -2,28 +2,30 @@ import dotenv from 'dotenv'
 import { createServer, Server } from 'net';
 import { Socket } from 'net';
 import { networkInterfaces } from 'os'
-import { getConnections, PeerInfo, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PIECEINFOS_MSG } from './model';
+import { getConnections, PeerInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEINFOS_MSG, server } from './model';
 import { forEachChild, getConfigFileParsingDiagnostics } from 'typescript';
 import { Connection } from './model';
+import logger from '../log/winston';
+import { doesNotThrow } from 'assert';
 
 dotenv.config()
 
 class Tracker {
     private netServer: Server
-    private onlinePeers: PeerInfo[] = []
-    private infoHashList: { [infoHash: string]: PeerInfo[] } = {} //Lưu trên DB ?
+    private onlinePeers: PeerInfo[] = [{ IP: server.IP, port: portSendFile, ID: 'peer1' }]
+    private infoHashList: { [infoHash: string]: PeerInfo[] } = { '71ce4fd5fc86beb57a50ee2564f2b76c7486f296': [{ IP: server.IP, port: portSendFile, ID: 'peer1' }] } //Lưu trên DB ?
     private peerConnections: Connection[] = []
+
 
     constructor(port: number) {
         this.netServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
 
             socket.on('data', (data) => {
-
                 let message: any
                 try {
                     message = JSON.parse(data.toString())
-
+                    logger.info("GIVEN DATA: " + message.toString())
 
                     if (message.message === 'infohash of peer') {
                         this.addPeerTo(message.infoHashOfPeer, message.IP, Number(message.port), message.ID)
@@ -41,7 +43,9 @@ class Tracker {
                         this.addPeerTo(message.infoHash, message.IP, Number(message.port), message.ID)
                     }
                     if (message.message === SEND_DOWNLOAD_SIGNAL_MSG) {
-                        console.log(`Peer IP:${socket.remoteAddress}-Port:${socket.remotePort} connect for downloading`)
+                        logger.info(`Peer IP:${socket.remoteAddress}-Port:${socket.remotePort} connect for downloading - InfoHash:${message.infoHash}`)
+                        const peerInfo: PeerInfo = { IP: socket.remoteAddress as string, port: message.port as number, ID: 'peer1' }
+                        this.responsePeerInfoForDownloading(socket, message.infoHash)
                     }
 
                     if (message.message === 'infoHash') {
@@ -63,13 +67,15 @@ class Tracker {
 
         const localIp = this.getLocalIp()
         if (localIp) {
+            console.log(`Tracker: ${localIp}:${port}`)
             this.netServer.listen(port, localIp, () => {
-                console.log(`Tracker: ${localIp}:${port}`)
+
             })
         } else {
             console.log('cannot open port!')
         }
     }
+
 
     private AddInfoHashToPeer = async (
         infoHash: string,
@@ -137,12 +143,12 @@ class Tracker {
         })
 
         socket.write(JSON.stringify({
-            message: SEND_PIECEINFOS_MSG,
+            message: SEND_PEERINFOS_MSG,
             peers: onlinePeersWithInfoHash
         }))
     }
-    private responsePeerInfoForDownloading = (peerInfo: PeerInfo, infohash: string) => {
-        const socket = getConnections(peerInfo, this.peerConnections)
+    private responsePeerInfoForDownloading = (socket: Socket, infohash: string) => {
+        // const socket = getConnections(peerInfo, this.peerConnections)
         const peersWithInfoHash = this.infoHashList[infohash]
         if (!peersWithInfoHash) {
             socket.write(JSON.stringify({
@@ -160,9 +166,9 @@ class Tracker {
                 }
             })
         })
-
+        console.log(onlinePeersWithInfoHash.length)
         socket.write(JSON.stringify({
-            message: SEND_PIECEINFOS_MSG,
+            message: SEND_PEERINFOS_MSG,
             peers: onlinePeersWithInfoHash
         }))
     }
@@ -190,4 +196,4 @@ class Tracker {
 }
 
 
-new Tracker(Number(process.env.TRACKER_PORT))
+new Tracker(Number(server.port))

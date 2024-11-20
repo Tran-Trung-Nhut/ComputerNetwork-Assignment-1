@@ -17,21 +17,21 @@ function App() {
     const websocket = new WebSocket('ws://localhost:2000')
     setWs(websocket)
 
-    return() => {
+    return () => {
       websocket.close()
     }
   }, [setWs])
 
   return (
-      <Router>
-        <Routes>
-          <Route path='/' element={<DefaultLayout/>}>
-            <Route path='/home' element={<Home/>}/>
-            <Route path='/history' element={<UploadAndDownloadShow/>}/>
-            <Route path='/peers' element={<Peers/>}/>
-          </Route>
-        </Routes>
-      </Router>
+    <Router>
+      <Routes>
+        <Route path='/' element={<DefaultLayout />}>
+          <Route path='/home' element={<Home />} />
+          <Route path='/history' element={<UploadAndDownloadShow />} />
+          <Route path='/peers' element={<Peers />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 
