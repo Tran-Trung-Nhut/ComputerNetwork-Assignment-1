@@ -19341,3 +19341,6 @@
     at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
     at Socket.Readable.push (node:internal/streams/readable:390:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:190:23)
+[2024-11-24 00:23:32] [[31merror[39m] Not exist peer having this dog.mp4
+[2024-11-24 00:31:43] [[31merror[39m] Peer 192.168.1.77 offline
+[2024-11-24 18:33:30] [[31merror[39m] Peer 192.168.1.77 offline

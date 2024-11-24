@@ -2,22 +2,25 @@ import dotenv from 'dotenv'
 import { createServer, Server } from 'net';
 import { Socket } from 'net';
 import { networkInterfaces } from 'os'
-import { getConnections, PeerInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEINFOS_MSG, server } from './model';
-import { forEachChild, getConfigFileParsingDiagnostics } from 'typescript';
+import { infoHashMapPeersJSONPath, PeerInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEINFOS_MSG, server, trackerPort } from './model';
 import { Connection } from './model';
 import logger from '../log/winston';
-import { doesNotThrow } from 'assert';
+import { readFileSync } from 'fs';
+import { updateInfoHashFile } from './service';
+import { ifError } from 'assert';
 
 dotenv.config()
 
 class Tracker {
     private netServer: Server
-    private onlinePeers: PeerInfo[] = [{ IP: server.IP, port: portSendFile, ID: 'peer1' }]
-    private infoHashList: { [infoHash: string]: PeerInfo[] } = { '71ce4fd5fc86beb57a50ee2564f2b76c7486f296': [{ IP: server.IP, port: portSendFile, ID: 'peer1' }] } //Lưu trên DB ?
-    private peerConnections: Connection[] = []
+    private onlinePeers: { [peerIP: string]: boolean } = {}
+    private infoHashList: { [infoHash: string]: PeerInfo[] }
 
 
     constructor(port: number) {
+
+        this.infoHashList = JSON.parse(readFileSync(infoHashMapPeersJSONPath, 'utf8'));
+        this.initializeOnlinePeers()
         this.netServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
 
@@ -27,29 +30,14 @@ class Tracker {
                     message = JSON.parse(data.toString())
                     logger.info("GIVEN DATA: " + message.toString())
 
-                    if (message.message === 'infohash of peer') {
-                        this.addPeerTo(message.infoHashOfPeer, message.IP, Number(message.port), message.ID)
-                    }
-
-                    if (message.message === 'infoHash') {
-                        this.getPeerWithInfoHash(socket, message.infoHash)
-                    }
-
-                    if (message.message === 'Update infoHash') {
-                        this.AddInfoHashToPeer(message.infoHash, message.ID, message.IP, Number(message.port))
-                    }
-
                     if (message.message === 'upload') {
-                        this.addPeerTo(message.infoHash, message.IP, Number(message.port), message.ID)
+                        this.addPeerTo(message.IP, Number(message.port), message.ID, message.infoHash)
                     }
+
                     if (message.message === SEND_DOWNLOAD_SIGNAL_MSG) {
                         logger.info(`Peer IP:${socket.remoteAddress}-Port:${socket.remotePort} connect for downloading - InfoHash:${message.infoHash}`)
                         const peerInfo: PeerInfo = { IP: socket.remoteAddress as string, port: message.port as number, ID: 'peer1' }
                         this.responsePeerInfoForDownloading(socket, message.infoHash)
-                    }
-
-                    if (message.message === 'infoHash') {
-                        this.getPeerWithInfoHash(socket, message.infoHash)
                     }
                 } catch (e) {
                     socket.write(JSON.stringify({
@@ -61,7 +49,12 @@ class Tracker {
 
             })
 
-            socket.on('close', () => {
+            socket.on('error', (err) => {
+                console.log(err.name + err.message)
+                if (err.message.includes('ECONNRESET')) {
+                    this.onlinePeers[socket.remoteAddress as string] = false
+                    logger.error(`Peer ${socket.remoteAddress} offline`)
+                }
             });
         })
 
@@ -74,79 +67,21 @@ class Tracker {
         } else {
             console.log('cannot open port!')
         }
+
+
     }
 
-
-    private AddInfoHashToPeer = async (
-        infoHash: string,
-        ID: string,
-        IP: string,
-        port: number
-    ) => {
-        if (!this.infoHashList[infoHash]) {
-            this.infoHashList[infoHash] = []
-        }
-
-        const peer: PeerInfo = {
-            IP: IP,
-            port: port,
-            ID: ID
-        }
-        await this.infoHashList[infoHash].push({
-            IP: IP,
-            port: port,
-            ID: ID
-        })
-    }
 
     private addPeerTo = async (
-        infoHashOfPeer: [string],
         IP: string,
         port: number,
-        ID: string) => {
+        ID: string, infoHash: any) => {
 
-        if (!infoHashOfPeer) return
+        if (!this.infoHashList) return
 
-        infoHashOfPeer.forEach(async (infoHash: string) => {
-
-            if (!this.infoHashList[infoHash]) {
-                this.infoHashList[infoHash] = [];
-            }
-
-            await this.infoHashList[infoHash].push({
-                IP: IP,
-                port: port,
-                ID: ID
-            })
-
-        });
+        await updateInfoHashFile(infoHash, { IP: IP, port: port, ID: ID }, infoHashMapPeersJSONPath)
     }
 
-    private getPeerWithInfoHash = (socket: Socket, infoHash: string) => {
-
-        const peersWithInfoHash = this.infoHashList[infoHash]
-        if (!peersWithInfoHash) {
-            socket.write(JSON.stringify({
-                message: 'error',
-                failure: 'No peer has this file'
-            }))
-
-            return
-        }
-        const onlinePeersWithInfoHash: PeerInfo[] = []
-        peersWithInfoHash.forEach((peer: PeerInfo, index: number) => {
-            this.onlinePeers.forEach((onlinePeer: PeerInfo, index: number) => {
-                if (onlinePeer.ID === peer.ID) {
-                    onlinePeersWithInfoHash.push(peer)
-                }
-            })
-        })
-
-        socket.write(JSON.stringify({
-            message: SEND_PEERINFOS_MSG,
-            peers: onlinePeersWithInfoHash
-        }))
-    }
     private responsePeerInfoForDownloading = (socket: Socket, infohash: string) => {
         // const socket = getConnections(peerInfo, this.peerConnections)
         const peersWithInfoHash = this.infoHashList[infohash]
@@ -160,10 +95,8 @@ class Tracker {
         }
         const onlinePeersWithInfoHash: PeerInfo[] = []
         peersWithInfoHash.forEach((peer: PeerInfo, index: number) => {
-            this.onlinePeers.forEach((onlinePeer: PeerInfo, index: number) => {
-                if (onlinePeer.ID === peer.ID) {
-                    onlinePeersWithInfoHash.push(peer)
-                }
+            Object.entries(this.onlinePeers).forEach(([key, value]) => {
+                if (key == peer.IP && value) onlinePeersWithInfoHash.push(peer)
             })
         })
         console.log(onlinePeersWithInfoHash.length)
@@ -193,6 +126,24 @@ class Tracker {
 
         return localIp
     }
+
+    private initializeOnlinePeers() {
+        Object.values(this.infoHashList).forEach(peerList => {
+            peerList.forEach(peerInfo => {
+                const flag = false
+                if (!(peerInfo.IP in this.onlinePeers)) {
+                    this.onlinePeers[peerInfo.IP] = true;
+                }
+            });
+        });
+
+
+    }
+
+
+
+
+
 }
 
 
