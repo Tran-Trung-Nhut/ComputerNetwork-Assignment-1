@@ -1,6 +1,6 @@
 import Modal from 'react-modal'
 import { useRecoilValue, useSetRecoilState } from "recoil"
-import { isOpenAddFileTorrentState, isOpenCreateTorrentState, outputPathState, wsState } from "../state"
+import { isOpenAddFileTorrentState, wsState } from "../state"
 import React, { useEffect, useState } from 'react'
 
 export default function AddFileTorrentPopup() {
@@ -38,6 +38,7 @@ export default function AddFileTorrentPopup() {
             filePath: filePath
         }))
 
+        setIsOpenAddFileTorrent(false)
     }
 
     return(

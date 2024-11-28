@@ -1,31 +1,37 @@
 import './App.css';
 import { Route, BrowserRouter as Router, Routes, useNavigate } from 'react-router-dom';
-import Home from './pages/Home';
 import { useEffect } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { clientState, wsState } from './state';
+import { wsState } from './state';
+import UploadAndDownloadShow from './pages/UploadAndDownloadShow';
+import DefaultLayout from './pages/DefaultLayout';
+import Home from './pages/Home';
+import Peers from './pages/Peers';
 
 function App() {
 
   const ws = useRecoilValue(wsState)
   const setWs = useSetRecoilState(wsState)
-  const setClient = useSetRecoilState(clientState)
 
   useEffect(() => {
     const websocket = new WebSocket('ws://localhost:2000')
     setWs(websocket)
 
-    return() => {
+    return () => {
       websocket.close()
     }
   }, [setWs])
 
   return (
-      <Router>
-        <Routes>
-          <Route path='/' element={<Home/>}/>
-        </Routes>
-      </Router>
+    <Router>
+      <Routes>
+        <Route path='/' element={<DefaultLayout />}>
+          <Route path='/home' element={<Home />} />
+          <Route path='/history' element={<UploadAndDownloadShow />} />
+          <Route path='/peers' element={<Peers />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 
