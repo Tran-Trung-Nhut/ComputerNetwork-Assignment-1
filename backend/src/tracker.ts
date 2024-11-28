@@ -20,7 +20,7 @@ class Tracker {
     constructor(port: number) {
 
         this.infoHashList = JSON.parse(readFileSync(infoHashMapPeersJSONPath, 'utf8'));
-        this.initializeOnlinePeers()
+
         this.netServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
 
@@ -58,6 +58,7 @@ class Tracker {
             });
         })
 
+
         const localIp = this.getLocalIp()
         if (localIp) {
             console.log(`Tracker: ${localIp}:${port}`)
@@ -67,6 +68,7 @@ class Tracker {
         } else {
             console.log('cannot open port!')
         }
+        this.initializeOnlinePeers()
 
 
     }
@@ -133,6 +135,8 @@ class Tracker {
                 const flag = false
                 if (!(peerInfo.IP in this.onlinePeers)) {
                     this.onlinePeers[peerInfo.IP] = true;
+                    // const socket = new Socket()
+                    // socket.connect(6005, peerInfo.IP)
                 }
             });
         });

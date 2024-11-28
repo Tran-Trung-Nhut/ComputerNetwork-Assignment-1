@@ -78,6 +78,7 @@ export function deletePeerOutofOnlineList(onlineList: PeerInfo[]) {
 
 export function getConnections(peer: PeerInfo, connections: Connection[]): Socket {
     for (let index = 0; index < connections.length; index++) {
+        console.log(connections[index].peerInfo.IP)
         if (checkEqual2Peers(connections[index].peerInfo, peer)) {
             return connections[index].socket
         }
@@ -105,7 +106,8 @@ export function removeConnections(peer: PeerInfo, connections: Connection[]) {
 }
 
 export function checkEqual2Peers(peer1: PeerInfo, peer2: PeerInfo) {
-    return peer1.IP == peer2.IP && peer1.port == peer2.port
+    console.log(peer1.IP, peer2.IP, peer1.port, peer2.port)
+    return peer1.IP === peer2.IP && peer1.port === peer2.port
 }
 
 export function createPieceIndexsForPeers(undownloadedIndices: number[], numofPeers: number): number[][] {

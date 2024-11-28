@@ -97,7 +97,8 @@ class NOde {
 
         //Lắng nghe peer khác kết nối
         this.peerServer = createServer((socket) => {
-            console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
+
+            logger.info(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
             socket.write(JSON.stringify({
                 message: 'ID of server peer',
                 ID: this.ID
@@ -111,7 +112,7 @@ class NOde {
                     message = JSON.parse(rawData)
 
                     if (message.message === SEND_PEERINFOS_MSG) {
-                        logger.info(`Recieve download info from IP-${socket.remoteAddress} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.name}]`)
+                        logger.info(`Recieve download info from IP-${socket.remoteAddress} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.name}]`)
                         this.sendPiece(message.pieceInfo, { IP: socket.remoteAddress, port: message.port, ID: 'peer1' } as PeerInfo)
                     }
 
@@ -128,24 +129,21 @@ class NOde {
                     }))
                 }
             })
-
+            socket.on('end', () => {
+                logger.info('Just end socket');
+            });
             socket.on('error', (err) => {
-                console.log(err.name + err.message)
+                logger.info(err.name + err.message)
                 if (err.message.includes('ECONNRESET')) {
-                    removeConnections({ IP: socket.remoteAddress as string, port: portSendFile, ID: '' }, this.peerConnections)
+                    removeConnections({ IP: socket.remoteAddress as string, port: socket.remotePort as number, ID: '' }, this.peerConnections)
                     setPeerOffline(this.downloads, { IP: socket.remoteAddress as string, port: portSendFile, ID: '' })
                     logger.error(`Peer ${socket.remoteAddress} offline`)
                 }
             });
         })
 
-        this.peerServer.listen(this.port, this.IP, () => {
-            const address = this.peerServer.address()
-            if (address && typeof address == 'object') {
-                console.log(`Server is running at ${address.address}:${address.port}`);
-            }
-        })
         this.peerServer.listen(portSendFile, () => {
+            logger.info(`Server is running at ${this.IP}:${this.port}`);
             logger.info(`Receive sendfile signal`)
         })
         app.listen(process.env.API_APP_PORT, () => { })
@@ -572,7 +570,7 @@ class NOde {
 
             const chunks = getFilePieces(torrentPath, pieceInfo.pieceSize, pieceInfo.indices);
 
-            await this.sendPiecesSequentially(chunks, pieceInfo, socket, peerInfo);
+            await this.sendPiecesSequentially(chunks, pieceInfo, socket, peerInfo, pieceInfo.indices);
         }
 
 
@@ -582,7 +580,8 @@ class NOde {
         chunks: Buffer[],
         pieceInfo: PieceDownloadInfo,
         socket: Socket,
-        peerInfo: PeerInfo
+        peerInfo: PeerInfo,
+        indices: number[]
     ) {
         socket.on('data', (data) => {
             const message = data.toString()
@@ -597,7 +596,7 @@ class NOde {
             const chunk = chunks[index];
             const chunkinfo: PieceDownloadInfo = {
                 name: pieceInfo.name,
-                indices: [index],
+                indices: [indices[index]],
                 infoHash: pieceInfo.infoHash,
                 pieceSize: pieceInfo.pieceSize
             };
@@ -617,7 +616,7 @@ class NOde {
             // Đặt lại flag để sẵn sàng cho lần gửi tiếp theo
             flag = false;
 
-            logger.info(`Send piece ${index} to IP:${peerInfo.IP}-port:${peerInfo.port}`);
+            logger.info(`Send piece ${indices[index]} to IP:${peerInfo.IP}-port:${peerInfo.port}`);
         }
     }
 
