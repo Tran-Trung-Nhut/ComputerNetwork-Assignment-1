@@ -73,6 +73,7 @@ class NOde {
     private connectedPeer: PeerDto[] = []
     private ws: WebSocket | null = null;
     private peerConnections: Connection[] = []
+    private tmpData = ""
 
     // Lưu trạng thái download
     private downloads: { [infohash: string]: { downloadStates: DownloadState[] } } = {}
@@ -102,11 +103,20 @@ class NOde {
                 let message: any
                 try {
 
-                    const rawData = data.toString()
+                    let rawData = data.toString()
                     console.log("DATA: \n", rawData)
+                    if (rawData[rawData.length - 1] != '}') {
+                        this.tmpData = this.tmpData + rawData
+                        return
+                    } else {
+                        rawData = this.tmpData + rawData
+                        this.tmpData = ""
+                    }
                     message = JSON.parse(rawData)
                     // console.log("DATA: \n", message)
-
+                    if (message.message === undefined) {
+                        console.log('FUCKING BUG')
+                    }
                     if (message.message === SEND_PEERINFOS_MSG) {
                         logger.info(`Recieve download info from IP-${socket.remoteAddress} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.name}]`)
                         this.sendPiece(message.pieceInfo, { IP: socket.remoteAddress, port: message.port, ID: 'peer1' } as PeerInfo)
@@ -363,13 +373,6 @@ class NOde {
         })
     }
 
-
-
-
-
-
-
-
     private scheduleDownload = (ws: WebSocket | null, socketToTracker: Socket, infoHashofFile: any, file: any) => {
         if (!ws) {
             return
@@ -377,7 +380,7 @@ class NOde {
         // Chon file cuoi cung , ch lam tai nhieu files :)) -> FUTURE TODO
         const fileSize = file.length
         console.log("Function getPeersFrommTrackerAndConnect: Filesize :" + fileSize)
-        const pieceSize = 1024 // KB
+        const pieceSize = 1024 * 10 // KB
         console.log("Function getPeersFrommTracker and Connect: Piecelength :" + pieceSize)
         const numPieces = Math.ceil(fileSize / pieceSize)
 
@@ -691,14 +694,6 @@ class NOde {
                 writeStream.end()
             }
             logger.info(`Download file successfully`)
-        } else if (getAllPiecesFromOnlinedPieces(downloadState)) {
-            let torrent = fs.readFileSync('repository/' + downloadState.fileName + '.torrent') as any
-            torrent = parseTorrent(torrent)
-            let file: any;
-            torrent.files.forEach((File: any, index: any) => {
-                file = File
-            });
-            this.scheduleDownload(this.ws, this.socketToTracker, pieceInfo.infoHash, file)
         } else {
             downloadState.indexMapBuffer.set(recieved_index[0], Buffer.from(message.buffer))
         }

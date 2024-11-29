@@ -19468,3 +19468,6 @@
 [2024-11-29 22:39:23] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
 [2024-11-29 22:39:23] [[31merror[39m] Peer 192.168.169.239 offline
 [2024-11-29 22:39:23] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:41:31] [[31merror[39m] Peer 192.168.169.196 offline
+[2024-11-29 22:47:28] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:47:28] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
