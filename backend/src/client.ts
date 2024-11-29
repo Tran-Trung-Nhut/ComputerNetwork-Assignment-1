@@ -92,12 +92,27 @@ class NOde {
 
         //Lắng nghe peer khác kết nối
         this.peerServer = createServer((socket) => {
-
+            socket.setNoDelay(true)
             logger.info(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
             socket.write(JSON.stringify({
                 message: 'ID of server peer',
                 ID: this.ID
             }))
+            socket.on('w', (data) => {
+                let message: any
+                try {
+
+                    const rawData = data.toString()
+                    console.log("DATA: \n", rawData)
+                    message = JSON.parse(rawData)
+                    if (message.message === SEND_PIECEDATAS_MSG) {
+                        this.handleSendPicesdataMSG(socket, message)
+                    }
+                }
+                catch (err) {
+
+                }
+            })
             socket.on('data', (data: string | any) => {
                 let message: any
                 try {
@@ -105,6 +120,7 @@ class NOde {
                     const rawData = data.toString()
                     console.log("DATA: \n", rawData)
                     message = JSON.parse(rawData)
+                    // console.log("DATA: \n", message)
 
                     if (message.message === SEND_PEERINFOS_MSG) {
                         logger.info(`Recieve download info from IP-${socket.remoteAddress} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.name}]`)
@@ -616,7 +632,7 @@ class NOde {
             };
 
             // Gửi dữ liệu qua socket
-            socket.write(Buffer.from(JSON.stringify(msg)));
+            socket.emit('w', Buffer.from(JSON.stringify(msg)));
             console.log('send file')
 
 

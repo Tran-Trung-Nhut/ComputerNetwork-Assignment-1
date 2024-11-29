@@ -19428,3 +19428,30 @@
 [2024-11-29 21:35:47] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
 [2024-11-29 21:38:34] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
 [2024-11-29 21:38:34] [[31merror[39m] Connection error with IP:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 21:40:29] [[31merror[39m] Peer 192.168.169.196 offline
+[2024-11-29 21:44:52] [[31merror[39m] Peer 192.168.169.196 offline
+[2024-11-29 21:48:36] [[31merror[39m] Peer 192.168.169.196 offline
+[2024-11-29 21:50:14] [[31merror[39m] Peer 192.168.169.196 offline
+[2024-11-29 21:51:56] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 21:56:03] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 21:56:03] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 21:56:03] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 21:59:04] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 21:59:04] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 21:59:04] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:01:14] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 22:01:14] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:01:14] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:02:43] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:02:43] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:05:41] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:05:41] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:07:27] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:07:27] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:09:21] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:09:21] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:15:34] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:15:34] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:15:34] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:17:08] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:17:08] [[31merror[39m] Peer 192.168.169.239 offline
