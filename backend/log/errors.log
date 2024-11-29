@@ -19455,3 +19455,16 @@
 [2024-11-29 22:15:34] [[31merror[39m] Peer 192.168.169.239 offline
 [2024-11-29 22:17:08] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
 [2024-11-29 22:17:08] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:31:57] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:31:57] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 22:31:57] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:33:19] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 22:33:19] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:33:19] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:33:46] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:38:53] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 22:38:53] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:38:53] [[31merror[39m] Peer ::ffff:192.168.169.239 offline
+[2024-11-29 22:39:23] [[31merror[39m] Connection error with IP:::ffff:192.168.169.239 - Port:6001: read ECONNRESET
+[2024-11-29 22:39:23] [[31merror[39m] Peer 192.168.169.239 offline
+[2024-11-29 22:39:23] [[31merror[39m] Peer ::ffff:192.168.169.239 offline

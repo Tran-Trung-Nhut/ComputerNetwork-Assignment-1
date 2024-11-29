@@ -98,21 +98,6 @@ class NOde {
                 message: 'ID of server peer',
                 ID: this.ID
             }))
-            socket.on('w', (data) => {
-                let message: any
-                try {
-
-                    const rawData = data.toString()
-                    console.log("DATA: \n", rawData)
-                    message = JSON.parse(rawData)
-                    if (message.message === SEND_PIECEDATAS_MSG) {
-                        this.handleSendPicesdataMSG(socket, message)
-                    }
-                }
-                catch (err) {
-
-                }
-            })
             socket.on('data', (data: string | any) => {
                 let message: any
                 try {
@@ -632,7 +617,7 @@ class NOde {
             };
 
             // Gửi dữ liệu qua socket
-            socket.emit('w', Buffer.from(JSON.stringify(msg)));
+            socket.write(Buffer.from(JSON.stringify(msg)));
             console.log('send file')
 
 
