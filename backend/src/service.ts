@@ -76,24 +76,40 @@ export function deletePeerOutofOnlineList(onlineList: PeerInfo[]) {
 
 }
 
-export function getConnections(peer: PeerInfo, connections: Connection[]): Socket {
+export async function getConnections(peer: PeerInfo, connections: Connection[]): Promise<Socket> {
+    // Check if there's an existing connection
     for (let index = 0; index < connections.length; index++) {
-        console.log(connections[index].peerInfo.IP)
         if (checkEqual2Peers(connections[index].peerInfo, peer)) {
-            return connections[index].socket
+            return connections[index].socket;
         }
     }
-    const socket = new Socket()
+
+    // Create a new socket
+    const socket = new Socket();
+
     try {
-        connections.push({ peerInfo: peer, socket: socket })
-        socket.connect(peer.port, peer.IP, () => {
-            logger.info(`Connect sucessfully with IP:${peer.IP} - Port:${peer.port}`)
-        })
+        // Push the connection early to track it
+        connections.push({ peerInfo: peer, socket });
+
+        // Await the connection using a Promise wrapper
+        await new Promise<void>((resolve, reject) => {
+            socket.connect(peer.port, peer.IP, () => {
+                logger.info(`Connected successfully to IP:${peer.IP} - Port:${peer.port}`);
+                resolve();
+            });
+
+            // Handle connection errors
+            socket.on('error', (err) => {
+                logger.error(`Connection error with IP:${peer.IP} - Port:${peer.port}: ${err.message}`);
+                reject(err);
+            });
+        });
     } catch (error) {
-        logger.error(`Something went wrong when connect with IP:${peer.IP} - Port:${peer.port}`)
+        // Remove the failed connection from the list
+        connections.pop();
     }
 
-    return socket
+    return socket;
 }
 
 export function removeConnections(peer: PeerInfo, connections: Connection[]) {
