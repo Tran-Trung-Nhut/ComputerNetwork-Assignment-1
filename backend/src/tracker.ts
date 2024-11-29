@@ -135,8 +135,6 @@ class Tracker {
                 const flag = false
                 if (!(peerInfo.IP in this.onlinePeers)) {
                     this.onlinePeers[peerInfo.IP] = true;
-                    // const socket = new Socket()
-                    // socket.connect(6005, peerInfo.IP)
                 }
             });
         });
@@ -151,4 +149,4 @@ class Tracker {
 }
 
 
-new Tracker(Number(server.port))
+new Tracker(Number(process.env.TRACKER_PORT))

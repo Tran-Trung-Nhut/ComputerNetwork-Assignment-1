@@ -19368,3 +19368,5 @@
 [2024-11-28 07:40:03] [[31merror[39m] Peer 192.168.1.77 offline
 [2024-11-28 07:46:28] [[31merror[39m] Peer 192.168.1.77 offline
 [2024-11-28 07:47:32] [[31merror[39m] Peer 192.168.1.77 offline
+[2024-11-29 11:32:48] [[31merror[39m] Error connecting to tracker: connect ENOENT 192.168.169.239
+[2024-11-29 11:41:54] [[31merror[39m] Peer 192.168.169.239 offline

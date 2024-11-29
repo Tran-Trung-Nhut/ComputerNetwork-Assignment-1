@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { FileDto } from './dtos/file.dto';
 import { PeerDto } from './dtos/peer.dto';
 import logger from '../log/winston';
-import { DownloadState, PeerInfo, PieceDownloadInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_SUCCESS_MSG, server } from './model';
+import { DownloadState, PeerInfo, PieceDownloadInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_SUCCESS_MSG } from './model';
 import { Connection } from './model';
 import { checkEqual2Peers, createPieceIndexsForPeers, getAllPiecesFromOnlinedPieces, getConnections, getFilePieces, removeConnections, setPeerOffline } from './service';
 const generatePeerID = (): string => {
@@ -95,9 +95,7 @@ class NOde {
         this.listenFrontend()
 
 
-        //Lắng nghe peer khác kết nối
         this.peerServer = createServer((socket) => {
-
             logger.info(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
             socket.write(JSON.stringify({
                 message: 'ID of server peer',
@@ -122,7 +120,6 @@ class NOde {
 
 
                 } catch (e) {
-                    // logger.error('Something went wrong', e)
                     socket.write(JSON.stringify({
                         message: 'error',
                         failure: 'Something went wrong, please do it again'
@@ -322,7 +319,7 @@ class NOde {
                 }
                 if (data.message === 'download by torrent') {
                     logger.info('get torrent file name from frontend')
-                    this.downloadFile(ws, data.fileName, [0])
+                    this.downloadFile(ws, data.filePath)
                 }
 
                 if (data.message === 'refresh Peers') {
@@ -395,25 +392,27 @@ class NOde {
     }
 
 
-    private scheduleDownload = (ws: WebSocket | null, socketToTracker: Socket, infoHashofFile: any, file: any) => {
+    private scheduleDownload = async (ws: WebSocket | null, infoHashofFile: any, file: any, pSize: number) => {
         if (!ws) {
             return
         }
-        // Chon file cuoi cung , ch lam tai nhieu files :)) -> FUTURE TODO 
 
         const fileSize = file.length
         console.log("Function getPeersFrommTrackerAndConnect: Filesize :" + fileSize)
-        const pieceSize = 17 * 1024 // KB
+        const pieceSize = pSize // KB
         console.log("Function getPeersFrommTracker and Connect: Piecelength :" + pieceSize)
         const numPieces = Math.ceil(fileSize / pieceSize)
 
-        socketToTracker.on('data', data => {
+        this.socketToTracker.on('data', data => {
             const message = JSON.parse(data.toString())
             logger.info('Get data from tracker')
             if (message.message === SEND_PEERINFOS_MSG) {
                 const peerHavingFiles: PeerInfo[] = message.peers
                 if (peerHavingFiles.length == 0) {
-                    logger.error(`Not exist peer having this ${path.basename(file.path)}`)
+                    ws.send(JSON.stringify({
+                        message: 'error',
+                        failure: 'No peer has this file'
+                    }))
                     return;
                 }
 
@@ -532,38 +531,44 @@ class NOde {
     }
 
     // Type of torrent,chosenFiles : Buffer,Number
-    public async downloadFile(ws: WebSocket, fileName: string, chosenFiles: any) {
-        let torrent = fs.readFileSync('repository/' + fileName) as any
-        torrent = parseTorrent(torrent)
+    public async downloadFile(ws: WebSocket, filePath: string) {
+        const torrent = fs.readFileSync(filePath)
+        const torrentInfor = parseTorrent(torrent)
 
-        const tracker = torrent.announce[0]
+        const tracker = torrentInfor.announce[0]
         const [ip, port] = tracker.split(':')
-        const socketToTracker = new Socket()
+        console.log(ip,port)
 
         try {
-            socketToTracker.connect(server.port, server.IP, async () => {
-                await socketToTracker.write(JSON.stringify({
+            this.socketToTracker.connect(port, ip, async () => {
+                this.socketToTracker.write(JSON.stringify({
                     message: SEND_DOWNLOAD_SIGNAL_MSG,
-                    port: server.port,
-                    infoHash: torrent.infoHash
+                    infoHash: torrentInfor.infoHash
+                }))
+            });
+
+
+            this.socketToTracker.on('error', (error) => {
+                ws.send(JSON.stringify({
+                    message: 'error',
+                    failure: error.message
                 }))
             });
 
             let file: any;
-            torrent.files.forEach((File: any, index: any) => {
+            torrentInfor.files.forEach((File: any) => {
                 file = File
             });
-            await this.scheduleDownload(ws, socketToTracker, torrent.infoHash, file)
+
+            await this.scheduleDownload(ws, torrentInfor.infoHash, file, torrentInfor.pieceLength)
         } catch (error) {
             logger.error('Connect to tracker fail')
         }
     }
 
     private async sendPiece(pieceInfo: PieceDownloadInfo, peerInfo: PeerInfo) {
-        // const torrentPath = localStorage.getItem(pieceInfo.infoHash.toString()) as string
         const torrentPath = 'repository/' + pieceInfo.name
         let flag = false
-        // MỘT PIECE CHO MỘT LẦN GỬI
 
         if (pieceInfo.indices.length != 0) {
             const socket = getConnections(peerInfo, this.peerConnections)
@@ -694,7 +699,7 @@ class NOde {
             torrent.files.forEach((File: any, index: any) => {
                 file = File
             });
-            this.scheduleDownload(this.ws, this.socketToTracker, pieceInfo.infoHash, file)
+            this.scheduleDownload(this.ws, pieceInfo.infoHash, file, pieceInfo.pieceSize)
         } else {
             downloadState.indexMapBuffer.set(recieved_index[0], Buffer.from(message.buffer))
 

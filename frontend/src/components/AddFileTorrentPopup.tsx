@@ -19,11 +19,14 @@ export default function AddFileTorrentPopup() {
                 if (message.failure === 'No peer has this file') {
                     alert('Không có peer nào sở hữu tệp này');
                     setIsOpenAddFileTorrent(false);
-                } 
+                } else
                 
                 if (message.failure === 'Something went wrong, please do it again') {
                     alert('Đã có lỗi xảy ra vui lòng thực hiện lại hành động');
                     setIsOpenAddFileTorrent(false);
+                } else {
+                    alert(message.failure)
+                    setIsOpenAddFileTorrent(false)
                 }
             }
         }
@@ -34,7 +37,7 @@ export default function AddFileTorrentPopup() {
         if(!ws) return
 
         ws.send(JSON.stringify({
-            message: 'torrent',
+            message: 'download by torrent',
             filePath: filePath
         }))
 
