@@ -7,7 +7,7 @@ import ParseTorrent from 'parse-torrent';
 
 // Define an array of file paths
 const filePath = [
-    'D:/ComputerNetwork-Assignment-1/backend/repository/dog.mp4',
+    'D:/ComputerNetwork-Assignment-1/backend/repository/test.txt',
 ];
 
 // Create an array of File objects
@@ -27,7 +27,7 @@ const filePath = [
 //     }
 // );
 
-let torrent = fs.readFileSync('repository/dog.mp4.torrent') as any
+let torrent = fs.readFileSync('repository/test.txt.torrent') as any
 torrent = ParseTorrent(torrent)
 const tracker = torrent.announce[0]
 const [ip, port] = tracker.split(':')

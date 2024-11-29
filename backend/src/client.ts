@@ -103,6 +103,7 @@ class NOde {
                 try {
 
                     const rawData = data.toString()
+                    console.log("DATA: \n", rawData)
                     message = JSON.parse(rawData)
 
                     if (message.message === SEND_PEERINFOS_MSG) {
@@ -373,18 +374,11 @@ class NOde {
             return
         }
         // Chon file cuoi cung , ch lam tai nhieu files :)) -> FUTURE TODO
-
-
-
-
         const fileSize = file.length
         console.log("Function getPeersFrommTrackerAndConnect: Filesize :" + fileSize)
-        const pieceSize = 17 * 1024 // KB
+        const pieceSize = 1024 // KB
         console.log("Function getPeersFrommTracker and Connect: Piecelength :" + pieceSize)
         const numPieces = Math.ceil(fileSize / pieceSize)
-
-
-
 
         socketToTracker.on('data', data => {
             const message = JSON.parse(data.toString())
@@ -396,16 +390,10 @@ class NOde {
                     return;
                 }
 
-
-
-
                 logger.info(`GET info of ${peerHavingFiles.length} peers`)
                 //DIVIDE PIECES FOR PEERS AND REQUEST DOWNLOAD
                 const downloadState = this.getOrCreateDownloadState(infoHashofFile, path.basename(file.path))
                 downloadState.peers = peerHavingFiles.map((ele) => ({ info: ele, numPieces: 0, numDownloaded: 0, online: true }))
-
-
-
 
                 this.sendPieceInfo2Peers(numPieces, downloadState, file, infoHashofFile, pieceSize)
             }
@@ -433,22 +421,12 @@ class NOde {
         const indices = Array.from({ length: numPieces }, (_, i) => i)
         downloadState.maxSize = numPieces
 
-
-
-
         let numofPeers = 0
         downloadState.peers.forEach((ele) => {
             numofPeers += ele.online ? 1 : 0
         });
-
-
-
-
         const pieceIndices = createPieceIndexsForPeers(indices, numofPeers)
         logger.info('Schedule:' + pieceIndices)
-
-
-
 
         for (let i = 0; i < pieceIndices.length; i++) {
             const peer = downloadState.peers[i]
@@ -464,9 +442,6 @@ class NOde {
                 pieceSize: pieceSize
             }
             const msg = { message: SEND_PEERINFOS_MSG, pieceInfo: chunkInfo, port: portSendFile }
-
-
-
 
             const socket = await getConnections(peer.info, this.peerConnections)
             socket.write(JSON.stringify(msg), (error) => {
@@ -563,16 +538,9 @@ class NOde {
         let torrent = fs.readFileSync('repository/' + fileName) as any
         torrent = parseTorrent(torrent)
 
-
-
-
         const tracker = torrent.announce[0]
         const [ip, port] = tracker.split(':')
         const socketToTracker = new Socket()
-
-
-
-
         try {
             socketToTracker.connect(server.port, server.IP, async () => {
                 await socketToTracker.write(JSON.stringify({
@@ -640,16 +608,15 @@ class NOde {
             };
 
 
-
-
             const msg = {
                 message: SEND_PIECEDATAS_MSG,
                 pieceInfo: chunkinfo,
-                buffer: chunk
+                buffer: chunk,
+
             };
 
             // Gửi dữ liệu qua socket
-            socket.write(JSON.stringify(msg));
+            socket.write(Buffer.from(JSON.stringify(msg)));
             console.log('send file')
 
 

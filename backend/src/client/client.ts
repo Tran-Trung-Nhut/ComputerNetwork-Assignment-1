@@ -438,8 +438,10 @@ class NOde {
             }
         })
         let flag = false
+        console.log(chunks.length)
         for (let index = 0; index < chunks.length; index++) {
             const chunk = chunks[index];
+            console.log("HELLLO" + chunk.toString())
             const chunkinfo: PieceDownloadInfo = {
                 name: pieceInfo.name,
                 indices: [index],
@@ -450,7 +452,7 @@ class NOde {
             const msg = {
                 message: SEND_PIECEDATAS_MSG,
                 pieceInfo: chunkinfo,
-                buffer: chunk
+                buffer: chunk.toString()
             };
 
             // Gửi dữ liệu qua socket
