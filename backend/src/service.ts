@@ -147,7 +147,7 @@ export function setPeerOffline(downloads: { [infohash: string]: { downloadStates
             const peer = state.peers.find(p => p.info.IP === peerInfoToSetOffline.IP);
             if (peer) {
                 peer.online = false; // Set the peer's online status to false
-                // console.log(`Peer ${peerInfoToSetOffline.IP} is now offline.`);
+                console.log(`Peer ${peerInfoToSetOffline.IP} is now offline.`);
             }
         });
     }

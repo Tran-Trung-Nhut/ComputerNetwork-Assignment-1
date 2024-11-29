@@ -342,7 +342,7 @@ class NOde {
                     const msg = { message: SEND_PIECEINFOS_MSG, pieceInfo: chunkInfo, port: portSendFile }
 
                     const socket = getConnections(peer, this.peerConnections)
-                    socket.write(JSON.stringify(msg), (error) => {
+                    socket.write(JSON.stringify(msg), (error: any) => {
                         if (error) {
                             logger.error('Send downloadInfo fail:', error);
                         } else {
