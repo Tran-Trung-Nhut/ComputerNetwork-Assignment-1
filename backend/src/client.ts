@@ -116,7 +116,7 @@ class NOde {
                     message = JSON.parse(rawData)
 
                     if (message.message === SEND_PIECEINFOS_MSG) {
-                        logger.info(`Recieve download info from IP-${remoteIP} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.name}]`)
+                        logger.info(`Recieve download info from IP-${remoteIP} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.file.name}]`)
                         this.sendPiece(message.pieceInfo, { IP: remoteIP, port: message.port, ID: 'peer1' } as PeerInfo)
                     }
 
@@ -277,7 +277,6 @@ class NOde {
     private listenFrontend() {
         this.webServer.on('connection', async (ws: WebSocket) => {
             await this.initialize()
-            this.ws = ws
             console.log('connect with frontend')
             ws.on('message', (message) => {
                 const data = JSON.parse(message.toString())
@@ -368,7 +367,7 @@ class NOde {
         // Chon file cuoi cung , ch lam tai nhieu files :)) -> FUTURE TODO
         const fileSize = file.length
         console.log("Function getPeersFrommTrackerAndConnect: Filesize :" + fileSize)
-        const pieceSize = 1024 * 512 // KB
+        const pieceSize = 1024 * 10 // KB
         console.log("Function getPeersFrommTracker and Connect: Piecelength :" + pieceSize)
         const numPieces = Math.ceil(fileSize / pieceSize)
 
@@ -569,9 +568,15 @@ class NOde {
         }
     }
     private sendPercentDownloadToFrontend(ws: WebSocket | null, indexes: number[], maxSize: number) {
-        ws?.send(JSON.stringify({
-            message: 'download by torrent',
+        console.log(Math.ceil(indexes.length * 100 / maxSize))
+        this.ws?.send(JSON.stringify({
+            message: 'percent',
             percent: Math.ceil(indexes.length * 100 / maxSize),
+        }))
+    }
+    private sendSuccessDownSignal(ws: WebSocket | null) {
+        ws?.send(JSON.stringify({
+            message: 'download successfully',
         }))
     }
     private getOrCreateDownloadState(infohash: string, file: any): DownloadState {
@@ -611,10 +616,10 @@ class NOde {
         let total_index = Array.from(new Set([...current_index, ...recieved_index])) as number[]
         downloadState.indexes = total_index
 
-        const writeStream = fs.createWriteStream('repository/copy_' + pieceInfo.file.name);
         console.log(`length of index: `, total_index.length, downloadState.maxSize)
         // Check xem các piece đã đc gửi đầy đủ chưa
         if (total_index.length === downloadState.maxSize) {
+            const writeStream = fs.createWriteStream('repository/copy_' + pieceInfo.file.name);
             if (total_index.length === 1) {
                 writeStream.write(Buffer.from(message.buffer))
                 writeStream.end()
@@ -632,7 +637,6 @@ class NOde {
         } else {
             downloadState.indexMapBuffer.set(recieved_index[0], Buffer.from(message.buffer))
         }
-        console.log(downloadState)
         socket.write(SEND_SUCCESS_MSG)
         logger.info(`Send piece successfully`)
         this.sendPercentDownloadToFrontend(this.ws, total_index as number[], downloadState.maxSize as number)

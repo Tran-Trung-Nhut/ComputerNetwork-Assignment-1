@@ -8,7 +8,7 @@ export const SEND_DOWNLOAD_SIGNAL_MSG = 'connect for downloading and get peers r
 export const RECIEVED_PIECE_MSG = 'recieved piece succesfully'
 export const SEND_SUCCESS_MSG = 'send pieced successfully'
 export const trackerPort = 6005
-export const server = { IP: '192.168.77.196', port: trackerPort }
+export const server = { IP: '192.168.102.11', port: trackerPort }
 export const portSendFile = 6001
 export const infoHashMapPeersJSONPath = 'localStorage/infoHashList.json'
 export class SendChunkInfoMessage {

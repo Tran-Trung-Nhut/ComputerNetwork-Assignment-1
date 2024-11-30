@@ -12,6 +12,8 @@ export function getFilePieces(
 ): Buffer[] {
     const file = fs.openSync(filePath, 'r'); // Open the file for reading
     const chunks: Buffer[] = [];
+    console.log(pieceLength)
+    console.log(pieceIndices)
     try {
         for (const index of pieceIndices) {
             // Calculate start and end byte positions for each piece
