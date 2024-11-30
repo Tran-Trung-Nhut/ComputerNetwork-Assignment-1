@@ -27,10 +27,11 @@ const filePath = [
 //     }
 // );
 
-let torrent = fs.readFileSync('repository/test.txt.torrent') as any
+let torrent = fs.readFileSync('repository/dog.mp4.torrent') as any
 torrent = ParseTorrent(torrent)
-const tracker = torrent.announce[0]
-const [ip, port] = tracker.split(':')
-console.log(torrent.infoHash)
+torrent.files.forEach((File: any, index: any) => {
+    console.log(File)
+});
+
 
 

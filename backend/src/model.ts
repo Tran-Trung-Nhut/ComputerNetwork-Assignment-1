@@ -8,7 +8,7 @@ export const SEND_DOWNLOAD_SIGNAL_MSG = 'connect for downloading and get peers r
 export const RECIEVED_PIECE_MSG = 'recieved piece succesfully'
 export const SEND_SUCCESS_MSG = 'send pieced successfully'
 export const trackerPort = 6005
-export const server = { IP: '192.168.1.77', port: trackerPort }
+export const server = { IP: '192.168.77.196', port: trackerPort }
 export const portSendFile = 6001
 export const infoHashMapPeersJSONPath = 'localStorage/infoHashList.json'
 export class SendChunkInfoMessage {
@@ -28,9 +28,13 @@ export class ChunkDataMessage {
     buffer: Buffer | null = null
 }
 export interface PieceDownloadInfo {
-    name: string
     pieceSize: number
     infoHash: string
+    file: {
+        name: string,
+        length: number,
+        path: string
+    }
     indices: number[]
 }
 export interface DownloadInfo {
@@ -43,7 +47,11 @@ export interface PeerInfo {
 export interface DownloadState {
     indexes: Number[] // Lưu index của file đã tải đc
     indexMapBuffer: Map<Number, Buffer>  // Map index với buffer
-    fileName: string
+    file: {
+        name: string,
+        length: number,
+        path: string
+    }
     maxSize: Number
     peers: { info: PeerInfo, numPieces: number, numDownloaded: number, online: boolean }[]
 }

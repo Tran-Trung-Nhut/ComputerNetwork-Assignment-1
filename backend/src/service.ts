@@ -12,7 +12,6 @@ export function getFilePieces(
 ): Buffer[] {
     const file = fs.openSync(filePath, 'r'); // Open the file for reading
     const chunks: Buffer[] = [];
-    console.log(pieceIndices)
     try {
         for (const index of pieceIndices) {
             // Calculate start and end byte positions for each piece
@@ -36,7 +35,7 @@ export function getFilePieces(
                 const bytesRead = fs.readSync(fileDescriptor, buffer, 0, bufferSize, offset);
                 chunks.push(buffer);
             } catch (error) {
-                logger.error('Error reading file:', error);
+                logger.error(`Error when reading file at path ${filePath}`, error);
             } finally {
                 fs.closeSync(fileDescriptor);
             }
@@ -122,7 +121,6 @@ export function removeConnections(peer: PeerInfo, connections: Connection[]) {
 }
 
 export function checkEqual2Peers(peer1: PeerInfo, peer2: PeerInfo) {
-    console.log(peer1.IP, peer2.IP, peer1.port, peer2.port)
     return peer1.IP === peer2.IP && peer1.port === peer2.port
 }
 
@@ -162,10 +160,17 @@ export function setPeerOffline(downloads: { [infohash: string]: { downloadStates
         downloadStates.forEach((state) => {
             const peer = state.peers.find(p => p.info.IP === peerInfoToSetOffline.IP);
             if (peer) {
-                peer.online = false; // Set the peer's online status to false
-                // console.log(`Peer ${peerInfoToSetOffline.IP} is now offline.`);
+                peer.online = false;
             }
         });
     }
 }
 
+export const extractIPv4 = (remoteAddress: string | undefined): string => {
+    if (remoteAddress != undefined) {
+        if (remoteAddress.startsWith("::ffff:")) {
+            return remoteAddress.slice(7);
+        }
+    }
+    return '';
+};
