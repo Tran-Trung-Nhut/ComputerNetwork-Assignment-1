@@ -88,34 +88,28 @@ export async function getConnections(peer: PeerInfo, connections: Connection[]):
     // Create a new socket
     const socket = new Socket();
 
-    try {
-        // Push the connection early to track it
-        connections.push({ peerInfo: peer, socket });
+    // Push the connection early to track it
+    connections.push({ peerInfo: peer, socket });
 
-        // Await the connection using a Promise wrapper
-        await new Promise<void>((resolve, reject) => {
-            socket.connect(peer.port, peer.IP, () => {
-                logger.info(`Connected successfully to IP:${peer.IP} - Port:${peer.port}`);
-                resolve();
-            });
+    // Await the connection using a Promise wrapper
+    socket.connect(peer.port, peer.IP, () => {
+        logger.info(`Connected successfully to IP:${peer.IP} - Port:${peer.port}`);
+    });
 
-            // Handle connection errors
-            socket.on('error', (err) => {
-                logger.error(`Connection error with IP:${peer.IP} - Port:${peer.port}: ${err.message}`);
-                reject(err);
-            });
-        });
-    } catch (error) {
-        // Remove the failed connection from the list
-        connections.pop();
-    }
+    // Handle connection errors
+    socket.on('error', (err) => {
+        logger.error(`Connection error with IP:${peer.IP} - Port:${peer.port}: ${err.message}`);
+        connections.pop()
+    });
 
     return socket;
 }
 
 export function removeConnections(peer: PeerInfo, connections: Connection[]) {
+    console.log(connections)
     for (let index = 0; index < connections.length; index++) {
         if (checkEqual2Peers(connections[index].peerInfo, peer)) {
+            logger.info(`Remove connection with ${peer.IP}`)
             connections.splice(index, 1)
             return
         }
@@ -162,6 +156,7 @@ export function setPeerOffline(downloads: { [infohash: string]: { downloadStates
         downloadStates.forEach((state) => {
             const peer = state.peers.find(p => p.info.IP === peerInfoToSetOffline.IP);
             if (peer) {
+                logger.info(`Set peer ${peer.info.IP} offline`)
                 peer.online = false;
             }
         });

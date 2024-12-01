@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { FileDto } from './dtos/file.dto';
 import { PeerDto } from './dtos/peer.dto';
 import logger from '../log/winston';
-import { DownloadState, PeerInfo, PieceDownloadInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_PIECEINFOS_MSG, SEND_SUCCESS_MSG, server } from './model';
+import { DownloadState, FileInfo, PeerInfo, PieceDownloadInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_PIECEINFOS_MSG, SEND_SUCCESS_MSG, server } from './model';
 import { Connection } from './model';
 import { checkEqual2Peers, createPieceIndexsForPeers, extractIPv4, getAllPiecesFromOnlinedPieces, getConnections, getFilePieces, removeConnections, setPeerOffline } from './service';
 const generatePeerID = (): string => {
@@ -134,11 +134,11 @@ class NOde {
             })
 
             socket.on('error', (err) => {
-                logger.info(err.name + err.message)
+                logger.error(err.name + err.message)
                 if (err.message.includes('ECONNRESET')) {
-                    removeConnections({ IP: remoteIP, port: portSendFile as number, ID: '' }, this.peerConnections)
+                    removeConnections({ IP: remoteIP, port: portSendFile, ID: '' }, this.peerConnections)
                     setPeerOffline(this.downloads, { IP: remoteIP, port: portSendFile, ID: '' })
-                    logger.error(`Peer ${socket.remoteAddress} offline`)
+                    logger.error(`Peer ${remoteIP} offline`)
                 }
             });
         })
@@ -360,14 +360,14 @@ class NOde {
         })
     }
 
-    private scheduleDownload = (ws: WebSocket | null, socketToTracker: Socket, infoHashofFile: any, file: any) => {
+    private scheduleDownload = (ws: WebSocket | null, socketToTracker: Socket, infoHashofFile: any, file: FileInfo) => {
         if (!ws) {
             return
         }
         // Chon file cuoi cung , ch lam tai nhieu files :)) -> FUTURE TODO
         const fileSize = file.length
         console.log("Function getPeersFrommTrackerAndConnect: Filesize :" + fileSize)
-        const pieceSize = 1024 * 10 // KB
+        const pieceSize = file.pieceLength // KB
         console.log("Function getPeersFrommTracker and Connect: Piecelength :" + pieceSize)
         const numPieces = Math.ceil(fileSize / pieceSize)
 
@@ -389,7 +389,7 @@ class NOde {
                     downloadState.peers = peerHavingFiles.map((ele) => ({ info: ele, numPieces: 0, numDownloaded: 0, online: true }))
                 }
 
-                this.sendPieceInfo2Peers(numPieces, downloadState, file, infoHashofFile, pieceSize)
+                this.sendPieceInfo2Peers(numPieces, downloadState, file, infoHashofFile)
             }
 
             if (message.message === 'error') {
@@ -402,7 +402,18 @@ class NOde {
 
     }
 
-    private async sendPieceInfo2Peers(numPieces: number, downloadState: DownloadState, file: any, infoHashofFile: string, pieceSize: number) {
+    private reScheduleDownload(infoHashofFile: any, file: FileInfo, downloadState: DownloadState) {
+        const fileSize = file.length
+        const pieceSize = file.pieceLength // KB
+        const numPieces = Math.ceil(fileSize / pieceSize)
+        logger.info('Reschedule download')
+        console.log(downloadState)
+        this.sendPieceInfo2Peers(numPieces, downloadState, file, infoHashofFile)
+
+    }
+
+
+    private async sendPieceInfo2Peers(numPieces: number, downloadState: DownloadState, file: FileInfo, infoHashofFile: string) {
         const indices = Array.from({ length: numPieces }, (_, i) => i)
         downloadState.maxSize = numPieces
 
@@ -424,7 +435,6 @@ class NOde {
                 indices: pieceIndices[i],
                 infoHash: infoHashofFile,
                 file: file,
-                pieceSize: pieceSize
             }
             const msg = { message: SEND_PIECEINFOS_MSG, pieceInfo: chunkInfo, port: portSendFile }
 
@@ -500,11 +510,13 @@ class NOde {
                     infoHash: torrent.infoHash
                 }))
             });
-            let file: any;
+            let file: FileInfo | null = null;
             torrent.files.forEach((File: any, index: any) => {
-                file = File
+                file = { name: File.name, path: File.path, length: File.length, pieceLength: torrent.pieceLength }
             });
-            await this.scheduleDownload(ws, socketToTracker, torrent.infoHash, file)
+            if (file) await this.scheduleDownload(ws, socketToTracker, torrent.infoHash, file)
+            else logger.error('No files found in the torrent');
+
         } catch (error) {
             logger.error('Connect to tracker fail')
         }
@@ -516,7 +528,7 @@ class NOde {
         // MỘT PIECE CHO MỘT LẦN GỬI
         if (pieceInfo.indices.length != 0) {
             const socket = await getConnections(peerInfo, this.peerConnections)
-            const chunks = getFilePieces(torrentPath, pieceInfo.pieceSize, pieceInfo.indices);
+            const chunks = getFilePieces(torrentPath, pieceInfo.file.pieceLength, pieceInfo.indices);
             await this.sendPiecesSequentially(chunks, pieceInfo, socket, peerInfo, pieceInfo.indices, pieceInfo.file);
         }
 
@@ -543,7 +555,6 @@ class NOde {
             const chunkinfo: PieceDownloadInfo = {
                 indices: [indices[index]],
                 infoHash: pieceInfo.infoHash,
-                pieceSize: pieceInfo.pieceSize,
                 file: file
             };
 
@@ -579,7 +590,7 @@ class NOde {
             message: 'download successfully',
         }))
     }
-    private getOrCreateDownloadState(infohash: string, file: any): DownloadState {
+    private getOrCreateDownloadState(infohash: string, file: FileInfo): DownloadState {
         // Check if the download entry for the infohash exists; if not, initialize it
         if (!this.downloads[infohash]) {
             this.downloads[infohash] = { downloadStates: [] };
@@ -591,7 +602,7 @@ class NOde {
             downloadState = {
                 indexes: [],
                 indexMapBuffer: new Map(),
-                file: { name: file.name, length: file.length, path: file.path },
+                file: { name: file.name, length: file.length, path: file.path, pieceLength: file.pieceLength },
                 maxSize: 0,
                 peers: []
             };
@@ -632,8 +643,7 @@ class NOde {
             }
             logger.info(`Download file successfully`)
         } else if (getAllPiecesFromOnlinedPieces(downloadState)) {
-            logger.info('Reschedule')
-            this.scheduleDownload(this.ws, this.socketToTracker, pieceInfo.infoHash, pieceInfo.file)
+            this.reScheduleDownload(pieceInfo.infoHash, pieceInfo.file, downloadState)
         } else {
             downloadState.indexMapBuffer.set(recieved_index[0], Buffer.from(message.buffer))
         }
