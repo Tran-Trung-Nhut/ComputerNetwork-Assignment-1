@@ -133,18 +133,31 @@ class Tracker {
         Object.values(this.infoHashList).forEach(peerList => {
             peerList.forEach(peerInfo => {
                 const flag = false
-                if (!(peerInfo.IP in this.onlinePeers)) {
-                    this.onlinePeers[peerInfo.IP] = true;
-                    // const socket = new Socket()
-                    // socket.connect(6005, peerInfo.IP)
-                }
+                if (!(peerInfo.IP in this.onlinePeers)) this.connectToPeer(peerInfo.IP)
             });
         });
 
-
     }
 
+    private connectToPeer(IP: string) {
+        const client = new Socket();
 
+        // Attempt to connect to the server
+        client.connect(portSendFile, IP, () => {
+            logger.info(`Connected with IP-${IP}`)
+            this.onlinePeers[IP] = true;
+
+            // You can now interact with the server here
+        });
+
+        client.on('error', (err) => {
+            logger.error(`Peer IP-${IP} offline. Retrying...`);
+            this.onlinePeers[IP] = false;
+            client.destroy(); // close the socket
+            setTimeout(() => this.connectToPeer(IP), 1000); // retry after 1 second
+        });
+
+    }
 
 
 
