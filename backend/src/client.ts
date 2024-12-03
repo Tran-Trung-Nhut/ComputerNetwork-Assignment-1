@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { FileDto } from './dtos/file.dto';
 import { PeerDto } from './dtos/peer.dto';
 import logger from '../log/winston';
-import { DownloadState, FileInfo, PeerInfo, PieceDownloadInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_PIECEINFOS_MSG, SEND_SUCCESS_MSG, server } from './model';
+import { DownloadState, FileInfo, PeerInfo, PieceDownloadInfo, portSendFile, REQUEST_ALL_PEERINFOS, SEND_ALL_PEERINFOS_MSG, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_PIECEINFOS_MSG, SEND_SUCCESS_MSG, server } from './model';
 import { Connection } from './model';
 import { checkEqual2Peers, createPieceIndexsForPeers, extractIPv4, getAllPiecesFromOnlinedPieces, getConnections, getFilePieces, removeConnections, setPeerOffline } from './service';
 const generatePeerID = (): string => {
@@ -59,12 +59,6 @@ function getWifiIPAddress() {
 const IP = getWifiIPAddress()
 
 
-
-
-
-
-
-
 class NOde {
     private ID: string | undefined
     private torrentDir: string = 'repository'
@@ -103,7 +97,24 @@ class NOde {
         this.checkPeerDatabase()
         this.listenFrontend()
 
-
+        // this.socketToTracker = new Socket()
+        // try {
+        //     this.socketToTracker.on('data', (data) => {
+        //         const message = JSON.parse(data.toString())
+        //         console.log(message)
+        //         if (message.message === SEND_ALL_PEERINFOS_MSG) {
+        //             this.ws?.send(message)
+        //         }
+        //     })
+        //     this.socketToTracker.connect(server.port, server.IP)
+        //     setInterval(() => {
+        //         this.socketToTracker.write(JSON.stringify({
+        //             message: REQUEST_ALL_PEERINFOS
+        //         }))
+        //     }, 1000)
+        // } catch (error) {
+        //     logger.error(`Connect to tracker fail or get data from tracker fail`)
+        // }
         //Lắng nghe peer khác kết nối
         this.peerServer = createServer((socket) => {
 
@@ -160,13 +171,6 @@ class NOde {
                 }
             });
         })
-
-
-
-
-
-
-
 
         this.peerServer.listen(portSendFile, () => {
             logger.info(`Server is running at ${this.IP}:${this.port}`);
@@ -308,6 +312,7 @@ class NOde {
             ws.on('message', (message) => {
                 const data = JSON.parse(message.toString())
                 console.log(data)
+                this.ws = ws
                 if (data.message === 'create torrent') {
                     this.createFileTorrent(ws, data.filePath, data.trackerURL, Number(data.pieceLength), data.name, data.outputTorrentPath)
                 }
