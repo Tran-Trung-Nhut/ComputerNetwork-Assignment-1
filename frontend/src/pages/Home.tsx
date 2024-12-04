@@ -3,20 +3,25 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil"
 import { isOpenAddFileTorrentState, isOpenCreateTorrentState, wsState } from "../state"
 import { Socket } from "net"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export default function Home() {
     const setIsOpenAddFileTorrent = useSetRecoilState(isOpenAddFileTorrentState)
     const setIsOpenCreateTorrent = useSetRecoilState(isOpenCreateTorrentState)
     const [ws, setWs] = useRecoilState(wsState)
+    const [fileName, setFileName] = useState()
+
     useEffect(() => {
+        console.log('hello')
+        if (!ws) return
         const websocket = new WebSocket('ws://localhost:2000')
+        websocket.onmessage = (event) => {
+            console.log(event)
+        }
         setWs(websocket)
 
-        return () => {
-            websocket.close()
-        }
-    }, [setWs]); // Only re-run this effect if ws changes
+    }, [])
+
     const testDownload = () => {
         if (!ws) {
             console.error('WebSocket is not open.');
@@ -25,7 +30,7 @@ export default function Home() {
 
         ws.send(JSON.stringify({
             message: 'download by torrent',
-            fileName: 'dog.mp4.torrent',
+            fileName: 'dog.mp4_1.torrent',
         }))
     }
 

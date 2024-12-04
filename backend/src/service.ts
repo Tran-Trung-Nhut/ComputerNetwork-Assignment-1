@@ -12,6 +12,7 @@ export function getFilePieces(
 ): Buffer[] {
     const file = fs.openSync(filePath, 'r'); // Open the file for reading
     const chunks: Buffer[] = [];
+    console.log(pieceLength)
     console.log(pieceIndices)
     try {
         for (const index of pieceIndices) {
@@ -36,7 +37,7 @@ export function getFilePieces(
                 const bytesRead = fs.readSync(fileDescriptor, buffer, 0, bufferSize, offset);
                 chunks.push(buffer);
             } catch (error) {
-                logger.error('Error reading file:', error);
+                logger.error(`Error when reading file at path ${filePath}`, error);
             } finally {
                 fs.closeSync(fileDescriptor);
             }
@@ -76,29 +77,66 @@ export function deletePeerOutofOnlineList(onlineList: PeerInfo[]) {
 
 }
 
-export function getConnections(peer: PeerInfo, connections: Connection[]): Socket {
+
+
+export async function getConnections(peer: PeerInfo, connections: Connection[]): Promise<Socket> {
+    // Check if there's an existing connection
     for (let index = 0; index < connections.length; index++) {
-        console.log(connections[index].peerInfo.IP)
         if (checkEqual2Peers(connections[index].peerInfo, peer)) {
-            return connections[index].socket
+            return connections[index].socket;
         }
     }
-    const socket = new Socket()
+
+
+
+
+    // Create a new socket
+    const socket = new Socket();
+
+
+
+
     try {
-        connections.push({ peerInfo: peer, socket: socket })
-        socket.connect(peer.port, peer.IP, () => {
-            logger.info(`Connect sucessfully with IP:${peer.IP} - Port:${peer.port}`)
-        })
+        // Push the connection early to track it
+        connections.push({ peerInfo: peer, socket });
+
+
+
+
+        // Await the connection using a Promise wrapper
+        await new Promise<void>((resolve, reject) => {
+            socket.connect(peer.port, peer.IP, () => {
+                logger.info(`Connected successfully to IP:${peer.IP} - Port:${peer.port}`);
+                resolve();
+            });
+
+
+
+
+            // Handle connection errors
+            socket.on('error', (err) => {
+                logger.error(`Connection error with IP:${peer.IP} - Port:${peer.port}: ${err.message}`);
+                reject(err);
+            });
+        });
     } catch (error) {
-        logger.error(`Something went wrong when connect with IP:${peer.IP} - Port:${peer.port}`)
+        // Remove the failed connection from the list
+        connections.pop();
     }
 
-    return socket
+
+
+
+    return socket;
 }
 
+
+
 export function removeConnections(peer: PeerInfo, connections: Connection[]) {
+    console.log(connections)
     for (let index = 0; index < connections.length; index++) {
         if (checkEqual2Peers(connections[index].peerInfo, peer)) {
+            logger.info(`Remove connection with ${peer.IP}`)
             connections.splice(index, 1)
             return
         }
@@ -106,7 +144,6 @@ export function removeConnections(peer: PeerInfo, connections: Connection[]) {
 }
 
 export function checkEqual2Peers(peer1: PeerInfo, peer2: PeerInfo) {
-    console.log(peer1.IP, peer2.IP, peer1.port, peer2.port)
     return peer1.IP === peer2.IP && peer1.port === peer2.port
 }
 
@@ -146,10 +183,18 @@ export function setPeerOffline(downloads: { [infohash: string]: { downloadStates
         downloadStates.forEach((state) => {
             const peer = state.peers.find(p => p.info.IP === peerInfoToSetOffline.IP);
             if (peer) {
-                peer.online = false; // Set the peer's online status to false
-                // console.log(`Peer ${peerInfoToSetOffline.IP} is now offline.`);
+                logger.info(`Set peer ${peer.info.IP} offline`)
+                peer.online = false;
             }
         });
     }
 }
 
+export const extractIPv4 = (remoteAddress: string | undefined): string => {
+    if (remoteAddress != undefined) {
+        if (remoteAddress.startsWith("::ffff:")) {
+            return remoteAddress.slice(7);
+        }
+    }
+    return '';
+};

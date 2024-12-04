@@ -7,7 +7,7 @@ import ParseTorrent from 'parse-torrent';
 
 // Define an array of file paths
 const filePath = [
-    'D:/ComputerNetwork-Assignment-1/backend/repository/dog.mp4',
+    'D:/ComputerNetwork-Assignment-1/backend/repository/sample.txt',
 ];
 
 // Create an array of File objects
@@ -16,6 +16,7 @@ const filePath = [
 
 // createTorrent(
 //     filePath,
+//     { pieceLength: 2 * 1024 * 1024 },
 //     (err, torrentBuffer) => {
 //         if (err) {
 //             console.error('Error creating torrent:', err);
@@ -27,10 +28,13 @@ const filePath = [
 //     }
 // );
 
-let torrent = fs.readFileSync('repository/dog.mp4.torrent') as any
+let torrent = fs.readFileSync('repository/sample.txt.torrent') as any
 torrent = ParseTorrent(torrent)
-const tracker = torrent.announce[0]
-const [ip, port] = tracker.split(':')
 console.log(torrent.infoHash)
+console.log(torrent.pieceLength)
+// torrent.files.forEach((File: any, index: any) => {
+//     console.log(File)
+// });
+
 
 

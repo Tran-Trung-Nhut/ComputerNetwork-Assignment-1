@@ -2,11 +2,11 @@ import dotenv from 'dotenv'
 import { createServer, Server } from 'net';
 import { Socket } from 'net';
 import { networkInterfaces } from 'os'
-import { infoHashMapPeersJSONPath, PeerInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEINFOS_MSG, server, trackerPort } from './model';
+import { infoHashMapPeersJSONPath, PeerInfo, portSendFile, REQUEST_ALL_PEERINFOS, SEND_ALL_PEERINFOS_MSG, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEINFOS_MSG, server, trackerPort } from './model';
 import { Connection } from './model';
 import logger from '../log/winston';
 import { readFileSync } from 'fs';
-import { updateInfoHashFile } from './service';
+import { checkEqual2Peers, updateInfoHashFile } from './service';
 import { ifError } from 'assert';
 
 dotenv.config()
@@ -15,11 +15,14 @@ class Tracker {
     private netServer: Server
     private onlinePeers: { [peerIP: string]: boolean } = {}
     private infoHashList: { [infoHash: string]: PeerInfo[] }
+    private allPeerInfos: { info: PeerInfo, online: boolean }[] = []
 
 
     constructor(port: number) {
 
         this.infoHashList = JSON.parse(readFileSync(infoHashMapPeersJSONPath, 'utf8'));
+        this.allPeerInfos = this.getAllPeerInfos()
+
 
         this.netServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
@@ -39,6 +42,14 @@ class Tracker {
                         const peerInfo: PeerInfo = { IP: socket.remoteAddress as string, port: message.port as number, ID: 'peer1' }
                         this.responsePeerInfoForDownloading(socket, message.infoHash)
                     }
+
+                    if (message.message === REQUEST_ALL_PEERINFOS) {
+                        socket.write(JSON.stringify({
+                            message: SEND_ALL_PEERINFOS_MSG,
+                            infos: this.allPeerInfos
+                        }))
+                    }
+
                 } catch (e) {
                     socket.write(JSON.stringify({
                         message: 'error',
@@ -58,7 +69,6 @@ class Tracker {
             });
         })
 
-
         const localIp = this.getLocalIp()
         if (localIp) {
             console.log(`Tracker: ${localIp}:${port}`)
@@ -69,7 +79,6 @@ class Tracker {
             console.log('cannot open port!')
         }
         this.initializeOnlinePeers()
-
 
     }
 
@@ -133,20 +142,50 @@ class Tracker {
         Object.values(this.infoHashList).forEach(peerList => {
             peerList.forEach(peerInfo => {
                 const flag = false
-                if (!(peerInfo.IP in this.onlinePeers)) {
-                    this.onlinePeers[peerInfo.IP] = true;
-                    // const socket = new Socket()
-                    // socket.connect(6005, peerInfo.IP)
-                }
+                if (!(peerInfo.IP in this.onlinePeers)) this.connectToPeer(peerInfo.IP)
             });
         });
 
+    }
+
+    private connectToPeer(IP: string) {
+        const client = new Socket();
+
+        // Attempt to connect to the server
+        client.connect(portSendFile, IP, () => {
+            logger.info(`Connected with IP-${IP}`)
+            this.onlinePeers[IP] = true;
+
+            // You can now interact with the server here
+        });
+
+        client.on('error', (err) => {
+            logger.error(`Peer IP-${IP} offline. Retrying...`);
+            this.onlinePeers[IP] = false;
+            client.destroy(); // close the socket
+            setTimeout(() => this.connectToPeer(IP), 1000); // retry after 1 second
+        });
 
     }
 
+    private getAllPeerInfos(): { info: PeerInfo, online: boolean }[] {
+        const allPeers: PeerInfo[] = [];
+        const uniquePeers: { info: PeerInfo, online: boolean }[] = [];
 
+        // Flatten all PeerInfo arrays into a single array
+        for (const peers of Object.values(this.infoHashList)) {
+            allPeers.push(...peers);
+        }
 
+        // Collect unique peers
+        for (const peer of allPeers) {
+            if (!uniquePeers.some(uniquePeer => checkEqual2Peers(uniquePeer.info, peer))) {
+                uniquePeers.push({ info: peer, online: false });
+            }
+        }
 
+        return uniquePeers;
+    }
 
 }
 
