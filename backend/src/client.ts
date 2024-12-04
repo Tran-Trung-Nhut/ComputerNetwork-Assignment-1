@@ -561,10 +561,10 @@ class NOde {
         const [ip, port] = tracker.split(':')
         const socketToTracker = new Socket()
         try {
-            socketToTracker.connect(server.port, server.IP, async () => {
+            socketToTracker.connect(port, ip, async () => {
                 await socketToTracker.write(JSON.stringify({
                     message: SEND_DOWNLOAD_SIGNAL_MSG,
-                    port: server.port,
+                    port: port,
                     infoHash: torrent.infoHash
                 }))
             });

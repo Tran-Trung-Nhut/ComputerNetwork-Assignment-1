@@ -1,5 +1,7 @@
-export interface PeerDto{
-    ID: string,
-    status: string,
+export interface PeerDto {
+    info: {
+        ID: string
+    }
+    online: boolean,
     lastConnect: Date
 }

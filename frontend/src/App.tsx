@@ -16,10 +16,6 @@ function App() {
   useEffect(() => {
     const websocket = new WebSocket('ws://localhost:2000')
     setWs(websocket)
-
-    return () => {
-      websocket.close()
-    }
   }, [setWs])
 
   return (
