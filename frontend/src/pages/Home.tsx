@@ -14,11 +14,9 @@ export default function Home() {
     useEffect(() => {
         console.log('hello')
         if (!ws) return
-        const websocket = new WebSocket('ws://localhost:2000')
-        websocket.onmessage = (event) => {
-            console.log(event)
+        ws.onmessage = (event) => {
+            console.log(event.data)
         }
-        setWs(websocket)
 
     }, [])
 
@@ -30,7 +28,7 @@ export default function Home() {
 
         ws.send(JSON.stringify({
             message: 'download by torrent',
-            fileName: 'dog.mp4_1.torrent',
+            fileName: 'sample.txt.torrent',
         }))
     }
 
