@@ -130,6 +130,7 @@ class NOde {
                 let message: any
                 try {
                     let rawData = data.toString()
+                    console.log(rawData)
                     if (!(remoteIP in this.tmpDatas)) this.tmpDatas[remoteIP] = { tmpData: '' };
                     if (rawData[rawData.length - 1] != '}') {
                         this.tmpDatas[remoteIP].tmpData += rawData
@@ -145,11 +146,15 @@ class NOde {
 
                     if (message.message === SEND_PIECEINFOS_MSG) {
                         logger.info(`Recieve download info from IP-${remoteIP} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.file.name}]`)
-                        this.sendPiece(message.pieceInfo, { IP: remoteIP, port: message.port, ID: 'peer1' } as PeerInfo)
+                        this.sendPiece(message.pieceInfo, { IP: remoteIP, port: message.port, ID: 'peer1' } as PeerInfo, socket)
                     }
 
 
                     if (message.message === SEND_PIECEDATAS_MSG) {
+                        this.ws?.send(JSON.stringify({
+                            message: 'start download'
+                        }))
+                        console.log(message.message)
                         this.handleSendPicesdataMSG(socket, message)
                     }
 
@@ -174,8 +179,12 @@ class NOde {
             });
         })
 
-        this.peerServer.listen(portSendFile, () => {
-            logger.info(`Server is running at ${this.IP}:${this.port}`);
+        this.peerServer.listen(portSendFile, this.IP,() => {
+            const address = this.peerServer.address()
+            const ip = typeof address === 'string' ? address : address?.address;
+            const port = typeof address === 'string' ? portSendFile : address?.port;
+
+            logger.info(`Server is running at ${ip}:${port}`);
             logger.info(`Receive sendfile signal`)
         })
         app.listen(process.env.API_APP_PORT, () => { })
@@ -563,7 +572,7 @@ class NOde {
         const [ip, port] = tracker.split(':')
         const socketToTracker = new Socket()
         try {
-            socketToTracker.connect(server.port, server.IP, async () => {
+            socketToTracker.connect(6001, ip, async () => {
                 await socketToTracker.write(JSON.stringify({
                     message: SEND_DOWNLOAD_SIGNAL_MSG,
                     port: portSendFile,
@@ -582,13 +591,13 @@ class NOde {
             logger.error('Connect to tracker fail')
         }
     }
-    private async sendPiece(pieceInfo: PieceDownloadInfo, peerInfo: PeerInfo) {
+    private async sendPiece(pieceInfo: PieceDownloadInfo, peerInfo: PeerInfo, socket: Socket) {
         // const torrentPath = localStorage.getItem(pieceInfo.infoHash.toString()) as string
         const torrentPath = 'repository/' + pieceInfo.file.name
         let flag = false
         // MỘT PIECE CHO MỘT LẦN GỬI
         if (pieceInfo.indices.length != 0) {
-            const socket = await getConnections(peerInfo, this.peerConnections)
+            // const socket = await getConnections(peerInfo, this.peerConnections)
             const chunks = getFilePieces(torrentPath, pieceInfo.file.pieceLength, pieceInfo.indices);
             await this.sendPiecesSequentially(chunks, pieceInfo, socket, peerInfo, pieceInfo.indices, pieceInfo.file);
         }
@@ -620,22 +629,15 @@ class NOde {
                 file: file
             };
 
-
-
-
             const msg = {
                 message: SEND_PIECEDATAS_MSG,
                 pieceInfo: chunkinfo,
                 buffer: chunk
             };
 
-
             // Gửi dữ liệu qua socket
             socket.write(Buffer.from(JSON.stringify(msg)));
             console.log('send file')
-
-
-
 
             // Chờ đến khi flag được đổi thành true
             await waitForChange(() => flag);

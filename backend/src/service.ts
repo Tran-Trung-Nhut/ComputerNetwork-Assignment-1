@@ -87,20 +87,12 @@ export async function getConnections(peer: PeerInfo, connections: Connection[]):
         }
     }
 
-
-
-
     // Create a new socket
     const socket = new Socket();
-
-
-
 
     try {
         // Push the connection early to track it
         connections.push({ peerInfo: peer, socket });
-
-
 
 
         // Await the connection using a Promise wrapper

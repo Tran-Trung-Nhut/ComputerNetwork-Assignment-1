@@ -12,13 +12,25 @@ export default function Home() {
     const [fileName, setFileName] = useState()
 
     useEffect(() => {
-        console.log('hello')
         if (!ws) return
-        ws.onmessage = (event) => {
-            console.log(event.data)
+
+        const handleWebSocketOpen = () => {
+        };
+
+        const onlineTracking = (event: MessageEvent) => {
+            const message = JSON.parse(event.data);
+            console.log(message)
+            if (message.message === 'start download') {
+            }
         }
 
-    }, [])
+        ws.addEventListener('message', onlineTracking);
+
+        return () => {
+            ws.removeEventListener('open', handleWebSocketOpen);
+            ws.removeEventListener('message', onlineTracking);
+        };
+    }, [ws])
 
     const testDownload = () => {
         if (!ws) {
