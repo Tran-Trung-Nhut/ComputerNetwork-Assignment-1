@@ -135,11 +135,13 @@ class NOde {
                         this.tmpDatas[remoteIP].tmpData += rawData
                         return
                     } else {
+                        console.log(rawData)
+
                         rawData = this.tmpDatas[remoteIP].tmpData + rawData
                         this.tmpDatas[remoteIP].tmpData = ''
                     }
                     message = JSON.parse(rawData)
-
+                    console.log(message)
 
                     if (message.message === SEND_PIECEINFOS_MSG) {
                         logger.info(`Recieve download info from IP-${remoteIP} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.file.name}]`)
@@ -354,8 +356,8 @@ class NOde {
                 [trackerURL]
             ],
             pieceLength: pieceLength,
-            name: name
         }, (err: Error | null, torrent: Buffer) => {
+            console.log(filePaths, name)
             if (err) {
                 console.log(err)
                 return
@@ -561,10 +563,10 @@ class NOde {
         const [ip, port] = tracker.split(':')
         const socketToTracker = new Socket()
         try {
-            socketToTracker.connect(port, ip, async () => {
+            socketToTracker.connect(server.port, server.IP, async () => {
                 await socketToTracker.write(JSON.stringify({
                     message: SEND_DOWNLOAD_SIGNAL_MSG,
-                    port: port,
+                    port: portSendFile,
                     infoHash: torrent.infoHash
                 }))
             });
@@ -582,7 +584,7 @@ class NOde {
     }
     private async sendPiece(pieceInfo: PieceDownloadInfo, peerInfo: PeerInfo) {
         // const torrentPath = localStorage.getItem(pieceInfo.infoHash.toString()) as string
-        const torrentPath = 'repository/' + pieceInfo.file.path
+        const torrentPath = 'repository/' + pieceInfo.file.name
         let flag = false
         // MỘT PIECE CHO MỘT LẦN GỬI
         if (pieceInfo.indices.length != 0) {

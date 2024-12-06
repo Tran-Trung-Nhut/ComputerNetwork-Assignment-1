@@ -28,7 +28,7 @@ export default function Home() {
 
         ws.send(JSON.stringify({
             message: 'download by torrent',
-            fileName: 'sample.txt.torrent',
+            fileName: 'dog.mp4_1.torrent',
         }))
     }
 

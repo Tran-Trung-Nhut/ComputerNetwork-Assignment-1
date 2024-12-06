@@ -28,13 +28,15 @@ const filePath = [
 //     }
 // );
 
-let torrent = fs.readFileSync('repository/sample.txt.torrent') as any
+let torrent = fs.readFileSync('repository/dog.torrent') as any
 torrent = ParseTorrent(torrent)
+console.log(torrent)
 console.log(torrent.infoHash)
 console.log(torrent.pieceLength)
-// torrent.files.forEach((File: any, index: any) => {
-//     console.log(File)
-// });
+
+torrent.files.forEach((File: any, index: any) => {
+    console.log(File)
+});
 
 
 

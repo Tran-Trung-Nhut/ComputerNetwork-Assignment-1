@@ -10,8 +10,8 @@ export const SEND_SUCCESS_MSG = 'send pieced successfully'
 export const REQUEST_ALL_PEERINFOS = 'request all peerinfos'
 export const SEND_ALL_PEERINFOS_MSG = 'send all peerinfos'
 export const trackerPort = 6005
-export const server = { IP: '192.168.77.196', port: trackerPort }
 export const portSendFile = 6001
+export const server = { IP: '192.168.1.196', port: trackerPort }
 export const infoHashMapPeersJSONPath = 'localStorage/infoHashList.json'
 
 export class ChunkDataMessage {
