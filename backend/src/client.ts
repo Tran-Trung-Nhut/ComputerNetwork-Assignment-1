@@ -150,15 +150,6 @@ class NOde {
                     }
 
 
-                    if (message.message === SEND_PIECEDATAS_MSG) {
-                        this.ws?.send(JSON.stringify({
-                            message: 'start download'
-                        }))
-                        console.log(message.message)
-                        this.handleSendPicesdataMSG(socket, message)
-                    }
-
-
                 } catch (e) {
                     // logger.error('Something went wrong', e)
                     socket.write(JSON.stringify({
@@ -507,9 +498,22 @@ class NOde {
             socket.write(JSON.stringify(msg), (error) => {
                 if (error) {
                     logger.error('Send downloadInfo fail:', error);
+                    
                 } else {
                     logger.info(`Send chunks info to IP(${peer.info.IP}) - port (${peer.info.port})`);
                 }
+            })
+
+            socket.on('data', (data) => {
+                const message = data.toString()
+                console.log(message)
+                // if (message.message === SEND_PIECEDATAS_MSG) {
+                //     this.ws?.send(JSON.stringify({
+                //         message: 'start download'
+                //     }))
+                //     console.log(message.message)
+                //     this.handleSendPicesdataMSG(socket, message)
+                // }
             })
         }
     }
