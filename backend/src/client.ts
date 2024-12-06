@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { FileDto } from './dtos/file.dto';
 import { PeerDto } from './dtos/peer.dto';
 import logger from '../log/winston';
-import { DownloadState, FileInfo, PeerInfo, PieceDownloadInfo, portSendFile, REQUEST_ALL_PEERINFOS, SEND_ALL_PEERINFOS_MSG, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_PIECEINFOS_MSG, SEND_SUCCESS_MSG, server } from './model';
+import { DownloadState, FileInfo, PeerInfo, PieceDownloadInfo, portSendFile, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_PIECEINFOS_MSG, SEND_SUCCESS_MSG } from './model';
 import { Connection } from './model';
 import { checkEqual2Peers, createPieceIndexsForPeers, extractIPv4, getAllPiecesFromOnlinedPieces, getConnections, getFilePieces, removeConnections, setPeerOffline } from './service';
 const generatePeerID = (): string => {
@@ -498,7 +498,7 @@ class NOde {
             socket.write(JSON.stringify(msg), (error) => {
                 if (error) {
                     logger.error('Send downloadInfo fail:', error);
-                    
+
                 } else {
                     logger.info(`Send chunks info to IP(${peer.info.IP}) - port (${peer.info.port})`);
                 }
