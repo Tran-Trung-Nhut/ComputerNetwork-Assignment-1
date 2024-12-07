@@ -3,6 +3,7 @@ import logger from "../log/winston";
 import { DownloadState, PeerInfo } from "./model";
 import { Connection } from "./model";
 import { Socket } from "net";
+import { networkInterfaces } from "os";
 
 const fs = require('fs')
 export function getFilePieces(
@@ -198,3 +199,25 @@ export const extractIPv4 = (remoteAddress: string | undefined): string => {
     }
     return '';
 };
+
+export const getLocalIP = (): string | undefined => {
+    const nets = networkInterfaces();
+    let localIp;
+
+    for (const name of Object.keys(nets)) {
+
+        if (name.includes('Wi-Fi') || name.includes('Wireless')) {
+            for (const net of nets[name] || []) {
+                if (net.family === 'IPv4' && !net.internal) {
+                    localIp = net.address;
+                    break;
+                }
+            }
+
+            if (localIp) {
+                break;
+            }
+        }
+    }
+    return localIp
+}

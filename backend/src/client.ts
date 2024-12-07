@@ -135,13 +135,10 @@ class NOde {
                         this.tmpDatas[remoteIP].tmpData += rawData
                         return
                     } else {
-                        console.log(rawData)
-
                         rawData = this.tmpDatas[remoteIP].tmpData + rawData
                         this.tmpDatas[remoteIP].tmpData = ''
                     }
                     message = JSON.parse(rawData)
-                    console.log(message)
 
                     if (message.message === SEND_PIECEINFOS_MSG) {
                         logger.info(`Recieve download info from IP-${remoteIP} : port-${socket.remotePort} : pieceindex-[${message.pieceInfo.indices}] : fileName-${message.pieceInfo.file.name}]`)
@@ -175,7 +172,11 @@ class NOde {
         })
 
         this.peerServer.listen(portSendFile, () => {
-            logger.info(`Server is running at ${this.IP}:${this.port}`);
+            const address = this.peerServer.address();
+            const ip = typeof address === 'string' ? address : address?.address;
+            const port = typeof address === 'string' ? portSendFile : address?.port;
+
+            logger.info(`Server is running at ${this.IP}:${port}`);
             logger.info(`Receive sendfile signal`)
         })
         app.listen(process.env.API_APP_PORT, () => { })
@@ -562,8 +563,9 @@ class NOde {
         const tracker = torrent.announce[0]
         const [ip, port] = tracker.split(':')
         const socketToTracker = new Socket()
+        logger.info(`Tracker info from torrent: IP-${IP} and port-${port}`)
         try {
-            socketToTracker.connect(server.port, server.IP, async () => {
+            socketToTracker.connect(port, ip as string, async () => {
                 await socketToTracker.write(JSON.stringify({
                     message: SEND_DOWNLOAD_SIGNAL_MSG,
                     port: portSendFile,
@@ -575,7 +577,7 @@ class NOde {
                 file = { name: File.name, path: File.path, length: File.length, pieceLength: torrent.pieceLength }
             });
             if (file) await this.scheduleDownload(ws, socketToTracker, torrent.infoHash, file)
-            else logger.error('No files found in the torrent');
+            else logger.error('No files found in the torrent')
 
 
         } catch (error) {

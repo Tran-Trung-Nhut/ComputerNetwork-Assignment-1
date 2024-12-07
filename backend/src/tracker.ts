@@ -72,7 +72,7 @@ class Tracker {
         const localIp = this.getLocalIp()
         if (localIp) {
             console.log(`Tracker: ${localIp}:${port}`)
-            this.netServer.listen(port, localIp, () => {
+            this.netServer.listen(server.port, () => {
 
             })
         } else {
@@ -131,10 +131,12 @@ class Tracker {
                     }
                 }
 
-                if (localIp) break;
+                if (localIp) {
+                    server.IP = localIp
+                    break;
+                }
             }
         }
-
         return localIp
     }
 
@@ -142,31 +144,32 @@ class Tracker {
         Object.values(this.infoHashList).forEach(peerList => {
             peerList.forEach(peerInfo => {
                 const flag = false
-                if (!(peerInfo.IP in this.onlinePeers)) this.connectToPeer(peerInfo.IP)
+                this.onlinePeers[peerInfo.IP] = true
+                // if (!(peerInfo.IP in this.onlinePeers)) this.connectToPeer(peerInfo.IP)
             });
         });
 
     }
 
-    private connectToPeer(IP: string) {
-        const client = new Socket();
+    // private connectToPeer(IP: string) {
+    //     const client = new Socket();
 
-        // Attempt to connect to the server
-        client.connect(portSendFile, IP, () => {
-            logger.info(`Connected with IP-${IP}`)
-            this.onlinePeers[IP] = true;
+    //     // Attempt to connect to the server
+    //     client.connect(portSendFile, IP, () => {
+    //         logger.info(`Connected with IP-${IP}`)
+    //         this.onlinePeers[IP] = true;
 
-            // You can now interact with the server here
-        });
+    //         // You can now interact with the server here
+    //     });
 
-        client.on('error', (err) => {
-            logger.error(`Peer IP-${IP} offline. Retrying...`);
-            this.onlinePeers[IP] = false;
-            client.destroy(); // close the socket
-            setTimeout(() => this.connectToPeer(IP), 1000); // retry after 1 second
-        });
+    //     client.on('error', (err) => {
+    //         logger.error(`Peer IP-${IP} offline. Retrying...`);
+    //         this.onlinePeers[IP] = false;
+    //         client.destroy(); // close the socket
+    //         setTimeout(() => this.connectToPeer(IP), 1000); // retry after 1 second
+    //     });
 
-    }
+    // }
 
     private getAllPeerInfos(): { info: PeerInfo, online: boolean }[] {
         const allPeers: PeerInfo[] = [];
