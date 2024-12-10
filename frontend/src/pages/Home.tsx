@@ -14,11 +14,11 @@ export default function Home() {
     useEffect(() => {
         console.log('hello')
         if (!ws) return
-        ws.onmessage = (event) => {
+        const getData = (event: any) => {
             console.log(event.data)
         }
-
-    }, [])
+        ws.addEventListener('message', getData);
+    }, [ws])
 
     const testDownload = () => {
         if (!ws) {

@@ -163,7 +163,7 @@ class NOde {
 
 
         // Gửi danh sách online tới front end
-        this.sendOnlinePeerToFE()
+        // this.sendOnlinePeerToFE()
 
         app.listen(process.env.API_APP_PORT, () => { })
     }
