@@ -5,3 +5,8 @@ export interface PeerDto {
     online: boolean,
     lastConnect: Date
 }
+export interface PeerInfo {
+    IP: string
+    port: number
+    ID: string
+}

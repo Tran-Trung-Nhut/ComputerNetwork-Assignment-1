@@ -3,9 +3,10 @@ export interface FileDto {
     file: FileInfo,
     percent: number,
 }
-interface FileInfo {
+export interface FileInfo {
     name: string,
     length: number,
     path: string,
     pieceLength: number
+    dateModified?: Date
 }

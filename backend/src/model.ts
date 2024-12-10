@@ -48,4 +48,5 @@ export interface FileInfo {
     length: number,
     path: string,
     pieceLength: number
+    dateModified?: Date
 }

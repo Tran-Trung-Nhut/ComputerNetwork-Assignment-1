@@ -1,9 +1,10 @@
 import { readFile, writeFile } from "fs/promises";
 import logger from "../log/winston";
-import { DownloadState, PeerInfo } from "./model";
+import { DownloadState, FileInfo, PeerInfo } from "./model";
 import { Connection } from "./model";
 import { Socket } from "net";
 import { networkInterfaces } from "os";
+import path from "path";
 
 const fs = require('fs')
 export function getFilePieces(
@@ -220,4 +221,28 @@ export const getLocalIP = (): string | undefined => {
         }
     }
     return localIp
+}
+export function getFolderFiles(folderPath: string): FileInfo[] {
+    const files: FileInfo[] = [];
+
+    // Read the directory
+    const fileNames = fs.readdirSync(folderPath);
+
+    for (const fileName of fileNames) {
+        const fullPath = path.join(folderPath, fileName);
+        const stats = fs.statSync(fullPath);
+
+        // Exclude files ending with '.torrent' and only process files (not directories)
+        if (stats.isFile() && !fileName.endsWith('.torrent')) {
+            files.push({
+                name: fileName,
+                length: stats.size,
+                pieceLength: 0,
+                path: '',
+                dateModified: stats.mtime,
+            });
+        }
+    }
+
+    return files;
 }

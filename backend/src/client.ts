@@ -12,7 +12,7 @@ import { PeerDto } from './dtos/peer.dto';
 import logger from '../log/winston';
 import { DownloadState, FileInfo, PeerInfo, PieceDownloadInfo, portSendFile, REQUEST_ALL_PEERINFOS, SEND_ALL_PEERINFOS_MSG, SEND_DOWNLOAD_SIGNAL_MSG, SEND_PEERINFOS_MSG, SEND_PIECEDATAS_MSG, SEND_PIECEINFOS_MSG, SEND_SUCCESS_MSG, server } from './model';
 import { Connection } from './model';
-import { checkEqual2Peers, createPieceIndexsForPeers, extractIPv4, getAllPiecesFromOnlinedPieces, getConnections, getFilePieces, removeConnections, setPeerOffline } from './service';
+import { checkEqual2Peers, createPieceIndexsForPeers, extractIPv4, getAllPiecesFromOnlinedPieces, getConnections, getFilePieces, getFolderFiles, removeConnections, setPeerOffline } from './service';
 const generatePeerID = (): string => {
     const deviceInfo = `${hostname()}-${arch()}-${platform()}`;
     return crypto.createHash('sha256').update(deviceInfo).digest('hex');
@@ -324,6 +324,13 @@ class NOde {
                         connectedPeer: this.connectedPeer
                     }))
                 }
+                if (data.message === 'get fileinfo') {
+                    const file = getFolderFiles('repository')
+                    ws.send(JSON.stringify({
+                        message: 'send fileinfo',
+                        files: file
+                    }))
+                }
             })
         })
     }
@@ -400,7 +407,7 @@ class NOde {
 
         socketToTracker.on('data', data => {
             const message = JSON.parse(data.toString())
-            logger.info('Get data from tracker')
+            logger.info('Get peerInfo for downloading from tracker')
             this.ws?.send(JSON.stringify({
                 message: 'start downloading',
                 file: file,
@@ -551,7 +558,8 @@ class NOde {
         const tracker = torrent.announce[0]
         const [ip, port] = tracker.split(':')
         const socketToTracker = await getConnections({ IP: ip, port: port, ID: 'tracker' }, this.trackerConnections)
-        logger.info(`Tracker info from torrent: IP-${IP} and port-${port}`)
+        this.sendOnlinePeerToFE(ip, port)
+        logger.info(`Tracker info from torrent: IP-${ip} and port-${port}`)
         try {
             socketToTracker.write(JSON.stringify({
                 message: SEND_DOWNLOAD_SIGNAL_MSG,
@@ -641,8 +649,8 @@ class NOde {
             percent: Math.ceil(indexes.length * 100 / maxSize),
         }))
     }
-    private sendSuccessDownSignal(ws: WebSocket | null) {
-        ws?.send(JSON.stringify({
+    private sendSuccessDownSignal(file: any) {
+        this.ws?.send(JSON.stringify({
             message: 'download successfully',
         }))
     }
@@ -678,7 +686,6 @@ class NOde {
             }
         })
 
-
         let current_index = downloadState.indexes
         let recieved_index = pieceInfo.indices
         let total_index = Array.from(new Set([...current_index, ...recieved_index])) as number[]
@@ -709,6 +716,9 @@ class NOde {
             }
             writeStream.end()
             this.downloads[pieceInfo.infoHash] = { downloadStates: [] }
+            this.ws?.send(JSON.stringify({
+                message: 'download successfully',
+            }))
             logger.info(`Download file successfully`)
             this.ws?.send(JSON.stringify({
                 message: 'download successfully',
@@ -718,11 +728,16 @@ class NOde {
         }
         socket.write(SEND_SUCCESS_MSG)
         logger.info(`Send piece successfully`)
-        this.sendPercentDownloadToFrontend(this.ws, total_index as number[], downloadState.maxSize as number, pieceInfo.file as FileInfo, pieceInfo.infoHash as string)
+        // this.sendPercentDownloadToFrontend(this.ws, total_index as number[], downloadState.maxSize as number, pieceInfo.file as FileInfo, pieceInfo.infoHash as string)
     }
 
-    private async sendOnlinePeerToFE() {
-        this.trackerSocket = await getConnections({ IP: server.IP as string, port: server.port, ID: 'tracker' }, this.trackerConnections)
+    private async sendOnlinePeerToFE(IP: string, port: number) {
+        let flag = false
+        this.trackerConnections.forEach((ele) => {
+            if (ele.peerInfo.IP === IP && ele.peerInfo.port === port) flag = true
+        })
+        if (flag) return
+        this.trackerSocket = await getConnections({ IP: IP, port: port, ID: 'tracker' }, this.trackerConnections)
         try {
             this.trackerSocket.on('data', (data) => {
                 const message = JSON.parse(data.toString())

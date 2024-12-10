@@ -2,6 +2,7 @@ import createTorrent from 'create-torrent';
 import * as fs from 'fs';
 import * as path from 'path';
 import ParseTorrent from 'parse-torrent';
+import { getFolderFiles } from '../service';
 
 // Custom File class
 
@@ -28,15 +29,15 @@ const filePath = [
 //     }
 // );
 
-let torrent = fs.readFileSync('repository/cats.torrent') as any
-torrent = ParseTorrent(torrent)
-console.log(torrent)
-console.log(torrent.infoHash)
-console.log(torrent.pieceLength)
+// let torrent = fs.readFileSync('repository/dog.torrent') as any
+// torrent = ParseTorrent(torrent)
+// console.log(torrent)
+// console.log(torrent.infoHash)
+// console.log(torrent.pieceLength)
 
-torrent.files.forEach((File: any, index: any) => {
-    console.log(File)
-});
+// torrent.files.forEach((File: any, index: any) => {
+//     console.log(File)
+// });
 
-
+console.log(getFolderFiles('repository'))
 
