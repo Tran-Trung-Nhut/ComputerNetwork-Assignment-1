@@ -67,7 +67,7 @@ class NOde {
     private localStoragePeer: string
     private localStorageFile: string
     private peerServer: Server
-    private socketToTracker: Socket = new Socket()
+    private trackerSocket: Socket = new Socket()
     private socketToPeers: Set<Socket> = new Set()
     private port: number | undefined
     private IP: string
@@ -76,6 +76,7 @@ class NOde {
     private connectedPeer: PeerDto[] = []
     private ws: WebSocket | null = null;
     private peerConnections: Connection[] = []
+    private trackerConnections: Connection[] = []
     private tmpDatas: { [remoteIP: string]: { tmpData: string } } = {}
 
 
@@ -96,26 +97,6 @@ class NOde {
 
         this.checkPeerDatabase()
         this.listenFrontend()
-
-        // this.socketToTracker = new Socket()
-        // try {
-        //     this.socketToTracker.on('data', (data) => {
-        //         const message = JSON.parse(data.toString())
-        //         console.log(message)
-        //         if (message.message === SEND_ALL_PEERINFOS_MSG) {
-        //             this.ws?.send(message)
-        //         }
-        //     })
-        //     this.socketToTracker.connect(server.port, server.IP)
-        //     setInterval(() => {
-        //         this.socketToTracker.write(JSON.stringify({
-        //             message: REQUEST_ALL_PEERINFOS
-        //         }))
-        //     }, 1000)
-        // } catch (error) {
-        //     logger.error(`Connect to tracker fail or get data from tracker fail`)
-        // }
-        //Lắng nghe peer khác kết nối
         this.peerServer = createServer((socket) => {
 
 
@@ -179,6 +160,11 @@ class NOde {
             logger.info(`Server is running at ${this.IP}:${port}`);
             logger.info(`Receive sendfile signal`)
         })
+
+
+        // Gửi danh sách online tới front end
+        this.sendOnlinePeerToFE()
+
         app.listen(process.env.API_APP_PORT, () => { })
     }
 
@@ -379,9 +365,9 @@ class NOde {
                     await this.loadToFile(path.join(this.storageDir, this.localStorageFile), this.fileSeeding)
 
 
-                    if (this.socketToTracker.connecting) {
+                    if (this.trackerSocket.connecting) {
                         const torrentJSON = await parseTorrent(torrent)
-                        this.socketToTracker.write(JSON.stringify({
+                        this.trackerSocket.write(JSON.stringify({
                             message: 'Update infoHash',
                             infoHash: torrentJSON.infoHash,
                             ID: this.ID,
@@ -562,16 +548,14 @@ class NOde {
 
         const tracker = torrent.announce[0]
         const [ip, port] = tracker.split(':')
-        const socketToTracker = new Socket()
+        const socketToTracker = await getConnections({ IP: ip, port: port, ID: 'tracker' }, this.trackerConnections)
         logger.info(`Tracker info from torrent: IP-${IP} and port-${port}`)
         try {
-            socketToTracker.connect(port, ip as string, async () => {
-                await socketToTracker.write(JSON.stringify({
-                    message: SEND_DOWNLOAD_SIGNAL_MSG,
-                    port: portSendFile,
-                    infoHash: torrent.infoHash
-                }))
-            });
+            socketToTracker.write(JSON.stringify({
+                message: SEND_DOWNLOAD_SIGNAL_MSG,
+                port: portSendFile,
+                infoHash: torrent.infoHash
+            }))
             let file: FileInfo | null = null;
             torrent.files.forEach((File: any, index: any) => {
                 file = { name: File.name, path: File.path, length: File.length, pieceLength: torrent.pieceLength }
@@ -594,8 +578,6 @@ class NOde {
             const chunks = getFilePieces(torrentPath, pieceInfo.file.pieceLength, pieceInfo.indices);
             await this.sendPiecesSequentially(chunks, pieceInfo, socket, peerInfo, pieceInfo.indices, pieceInfo.file);
         }
-
-
     }
     private async sendPiecesSequentially(
         chunks: Buffer[],
@@ -648,10 +630,12 @@ class NOde {
             logger.info(`Send piece ${indices[index]} to IP:${peerInfo.IP}-port:${peerInfo.port}`);
         }
     }
-    private sendPercentDownloadToFrontend(ws: WebSocket | null, indexes: number[], maxSize: number) {
+    private sendPercentDownloadToFrontend(ws: WebSocket | null, indexes: number[], maxSize: number, file: FileInfo, infoHash: string) {
         console.log(Math.ceil(indexes.length * 100 / maxSize))
         this.ws?.send(JSON.stringify({
             message: 'percent',
+            id: infoHash,
+            file: file,
             percent: Math.ceil(indexes.length * 100 / maxSize),
         }))
     }
@@ -719,18 +703,36 @@ class NOde {
                 const indexMapBuffer = downloadState.indexMapBuffer
                 for (let index = 0; index < total_index.length; index++) {
                     writeStream.write(indexMapBuffer.get(index))
-                    console.log(index)
                 }
-                console.log('???????????????')
             }
-            writeStream.end();
+            writeStream.end()
+            this.downloads[pieceInfo.infoHash] = { downloadStates: [] }
             logger.info(`Download file successfully`)
         } else if (getAllPiecesFromOnlinedPieces(downloadState)) {
             this.reScheduleDownload(pieceInfo.infoHash, pieceInfo.file, downloadState)
         }
         socket.write(SEND_SUCCESS_MSG)
         logger.info(`Send piece successfully`)
-        this.sendPercentDownloadToFrontend(this.ws, total_index as number[], downloadState.maxSize as number)
+        this.sendPercentDownloadToFrontend(this.ws, total_index as number[], downloadState.maxSize as number, pieceInfo.file as FileInfo, pieceInfo.infoHash as string)
+    }
+
+    private async sendOnlinePeerToFE() {
+        this.trackerSocket = await getConnections({ IP: server.IP as string, port: server.port, ID: 'tracker' }, this.trackerConnections)
+        try {
+            this.trackerSocket.on('data', (data) => {
+                const message = JSON.parse(data.toString())
+                if (message.message === SEND_ALL_PEERINFOS_MSG) {
+                    this.ws?.send(JSON.stringify(message))
+                }
+            })
+            setInterval(() => {
+                this.trackerSocket.write(JSON.stringify({
+                    message: REQUEST_ALL_PEERINFOS
+                }))
+            }, 1000)
+        } catch (error) {
+            logger.error(`Connect to tracker fail or get data from tracker fail`)
+        }
     }
 }
 if (IP) new NOde(defaultPort, IP, peerID)
