@@ -640,13 +640,16 @@ class NOde {
             logger.info(`Send piece ${indices[index]} to IP:${peerInfo.IP}-port:${peerInfo.port}`);
         }
     }
-    private sendPercentDownloadToFrontend(ws: WebSocket | null, indexes: number[], maxSize: number, file: FileInfo, infoHash: string) {
+    private sendPercentDownloadToFrontend(ws: WebSocket | null, indexes: number[], maxSize: number, file: FileInfo, infoHash: string, peers: any) {
         console.log(Math.ceil(indexes.length * 100 / maxSize))
         this.ws?.send(JSON.stringify({
             message: 'percent',
-            id: infoHash,
-            file: file,
-            percent: Math.ceil(indexes.length * 100 / maxSize),
+            data: {
+                id: infoHash,
+                file: file,
+                peers: peers,
+                percent: Math.ceil(indexes.length * 100 / maxSize),
+            }
         }))
     }
     private sendSuccessDownSignal(file: any) {
@@ -728,7 +731,7 @@ class NOde {
         }
         socket.write(SEND_SUCCESS_MSG)
         logger.info(`Send piece successfully`)
-        // this.sendPercentDownloadToFrontend(this.ws, total_index as number[], downloadState.maxSize as number, pieceInfo.file as FileInfo, pieceInfo.infoHash as string)
+        this.sendPercentDownloadToFrontend(this.ws, total_index as number[], downloadState.maxSize as number, pieceInfo.file as FileInfo, pieceInfo.infoHash as string, downloadState.peers)
     }
 
     private async sendOnlinePeerToFE(IP: string, port: number) {
