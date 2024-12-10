@@ -1,5 +1,5 @@
 export interface FileDto {
-    id: string,// infoHash
+    id: string,
     file: FileInfo,
     percent: number,
 }

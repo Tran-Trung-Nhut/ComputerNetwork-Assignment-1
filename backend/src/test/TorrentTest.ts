@@ -28,7 +28,7 @@ const filePath = [
 //     }
 // );
 
-let torrent = fs.readFileSync('repository/dog.torrent') as any
+let torrent = fs.readFileSync('repository/cats.torrent') as any
 torrent = ParseTorrent(torrent)
 console.log(torrent)
 console.log(torrent.infoHash)

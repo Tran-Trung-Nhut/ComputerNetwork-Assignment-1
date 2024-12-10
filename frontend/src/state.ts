@@ -1,6 +1,6 @@
 import { atom } from 'recoil';
-import { FileDto } from './dtos/file.dto';
 import { PeerDto } from './dtos/peer.dto';
+import { FileDto } from './dtos/file.dto';
 
 export const clientState = atom({
     key: 'clientState', // unique ID (cho Recoil để quản lý)

@@ -401,6 +401,10 @@ class NOde {
         socketToTracker.on('data', data => {
             const message = JSON.parse(data.toString())
             logger.info('Get data from tracker')
+            this.ws?.send(JSON.stringify({
+                message: 'start downloading',
+                file: file,
+            }))
             if (message.message === SEND_PEERINFOS_MSG) {
                 const peerHavingFiles: PeerInfo[] = message.peers
                 if (peerHavingFiles.length == 0) {
@@ -444,8 +448,6 @@ class NOde {
 
 
     }
-
-
 
 
     private async sendPieceInfo2Peers(numPieces: number, downloadState: DownloadState, file: FileInfo, infoHashofFile: string) {
@@ -708,6 +710,9 @@ class NOde {
             writeStream.end()
             this.downloads[pieceInfo.infoHash] = { downloadStates: [] }
             logger.info(`Download file successfully`)
+            this.ws?.send(JSON.stringify({
+                message: 'download successfully',
+            }))
         } else if (getAllPiecesFromOnlinedPieces(downloadState)) {
             this.reScheduleDownload(pieceInfo.infoHash, pieceInfo.file, downloadState)
         }
