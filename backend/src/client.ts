@@ -770,8 +770,16 @@ class NOde {
                     removeConnections({ IP: peer.IP, port: portSendFile, ID: '' }, this.peerConnections)
                     setPeerOffline(this.downloads, { IP: peer.IP, port: portSendFile, ID: '' })
                     logger.error(`Peer ${peer.IP} offline`)
+                    socket.destroy()
                 }
             })
+            socket.setTimeout(3000)
+            socket.on('timeout', () => {
+                removeConnections({ IP: peer.IP, port: portSendFile, ID: '' }, this.peerConnections)
+                setPeerOffline(this.downloads, { IP: peer.IP, port: portSendFile, ID: '' })
+                logger.error(`Peer ${peer.IP} offline`)
+                socket.destroy()
+            });
         }
         return socket
     }
