@@ -305,6 +305,7 @@ class NOde {
                 if (data.message === 'create torrent') {
                     this.createFileTorrent(ws, data.filePath, data.trackerURL, Number(data.pieceLength), data.name, data.outputTorrentPath)
                 }
+
                 if (data.message === 'change downloadOutput') {
                     this.downloadOutput = data.downloadOutput
                 }
@@ -371,24 +372,21 @@ class NOde {
                     })
                     await this.loadToFile(path.join(this.storageDir, this.localStorageFile), this.fileSeeding)
 
-
-                    if (this.trackerSocket.connecting) {
-                        const torrentJSON = await parseTorrent(torrent)
-                        this.trackerSocket.write(JSON.stringify({
-                            message: 'Update infoHash',
-                            infoHash: torrentJSON.infoHash,
-                            ID: this.ID,
-                            IP: this.IP,
-                            port: this.port,
-                        }))
-                    }
                 }
-
-
+                const torrentJSON = parseTorrent(torrent)
+                const [ip, port] = trackerURL.split(':')
+                console.log(ip + ' ' + port)
+                const tracker = getConnections({ IP: ip, port: Number(port), ID: 'tracker' }, this.trackerConnections)
+                tracker.write(JSON.stringify({
+                    message: 'upload',
+                    infoHash: torrentJSON.infoHash,
+                    id: 'User'
+                }))
                 ws.send(JSON.stringify({
                     message: 'Create torrent successfully'
                 }))
             })
+
         })
     }
 
@@ -452,27 +450,18 @@ class NOde {
         logger.info('Reschedule download')
         console.log(downloadState)
         this.sendPieceInfo2Peers(numPieces, downloadState, file, infoHashofFile)
-
-
     }
-
-
     private async sendPieceInfo2Peers(numPieces: number, downloadState: DownloadState, file: FileInfo, infoHashofFile: string) {
         const indices = Array.from({ length: numPieces }, (_, i) => i)
         const current_index = downloadState.indexes
         const result_indices = indices.filter(item => !current_index.includes(item))
-
         downloadState.maxSize = numPieces
-
-
         let numofPeers = 0
         downloadState.peers.forEach((ele) => {
             numofPeers += ele.online ? 1 : 0
         });
         const pieceIndices = createPieceIndexsForPeers(result_indices, numofPeers)
         logger.info('Schedule:' + pieceIndices)
-
-
         let flag = 0
         for (let i = 0; i < pieceIndices.length; i++) {
             const peer = downloadState.peers[i + flag]
@@ -488,8 +477,6 @@ class NOde {
                 file: file,
             }
             const msg = { message: SEND_PIECEINFOS_MSG, pieceInfo: chunkInfo, port: portSendFile }
-
-
             const socket = this.getPeerConnect(peer.info)
             socket.write(JSON.stringify(msg), (error) => {
                 if (error) {
@@ -501,11 +488,8 @@ class NOde {
         }
     }
 
-
     public connectToPeers = (ws: WebSocket, IP: string, port: number) => {
         const socketToPeer = new Socket()
-
-
         socketToPeer.connect(port, IP, () => {
             console.log(`Connect to peer at ${IP}:${port}`)
             this.socketToPeers.add(socketToPeer)
@@ -521,8 +505,6 @@ class NOde {
             })
         })
     }
-
-
     private insertPeerConnectPeerDB = async (ws: WebSocket, ID: string) => {
         try {
             for (let peer of this.connectedPeer) {
@@ -614,26 +596,16 @@ class NOde {
                 file: file
             };
 
-
-
-
             const msg = {
                 message: SEND_PIECEDATAS_MSG,
                 pieceInfo: chunkinfo,
                 buffer: chunk
             };
 
-
-            // Gửi dữ liệu qua socket
             socket.write(Buffer.from(JSON.stringify(msg)));
             console.log('send file')
 
-
-
-
-            // Chờ đến khi flag được đổi thành true
             await waitForChange(() => flag);
-            // Đặt lại flag để sẵn sàng cho lần gửi tiếp theo
             flag = false;
 
 
@@ -773,11 +745,11 @@ class NOde {
                     socket.destroy()
                 }
             })
-            socket.setTimeout(3000)
+            socket.setTimeout(5000)
             socket.on('timeout', () => {
                 removeConnections({ IP: peer.IP, port: portSendFile, ID: '' }, this.peerConnections)
                 setPeerOffline(this.downloads, { IP: peer.IP, port: portSendFile, ID: '' })
-                logger.error(`Peer ${peer.IP} offline`)
+                logger.error(`Peer ${peer.IP} offline timeout`)
                 socket.destroy()
             });
         }

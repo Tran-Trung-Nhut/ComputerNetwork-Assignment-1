@@ -62,11 +62,14 @@ export async function updateInfoHashFile(infoHash: string, newPeer: PeerInfo, js
         if (!infoHashList[infoHash]) {
             infoHashList[infoHash] = []; // Initialize if it doesn't exist
         }
+        infoHashList[infoHash].forEach((ele) => {
+            if (ele.IP === newPeer.IP && ele.port == ele.port) return
+        })
         infoHashList[infoHash].push(newPeer);
 
         // Write the updated object back to the file
         const updatedJson = JSON.stringify(infoHashList, null, 2);
-        await writeFile('infoHashList.json', updatedJson);
+        await writeFile(jsonpath, updatedJson);
 
         console.log('Element added successfully!');
     } catch (err) {

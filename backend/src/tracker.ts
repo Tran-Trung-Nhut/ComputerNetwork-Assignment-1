@@ -6,7 +6,7 @@ import { infoHashMapPeersJSONPath, PeerInfo, portSendFile, REQUEST_ALL_PEERINFOS
 import { Connection } from './model';
 import logger from '../log/winston';
 import { readFileSync } from 'fs';
-import { checkEqual2Peers, updateInfoHashFile } from './service';
+import { checkEqual2Peers, extractIPv4, updateInfoHashFile } from './service';
 import { ifError } from 'assert';
 
 dotenv.config()
@@ -26,7 +26,7 @@ class Tracker {
 
         this.netServer = createServer((socket) => {
             console.log(`Peer connected from ${socket.remoteAddress}:${socket.remotePort}`);
-
+            const remoteIP = extractIPv4(socket.remoteAddress)
             socket.on('data', (data) => {
                 let message: any
                 try {
@@ -34,7 +34,7 @@ class Tracker {
                     logger.info("GIVEN DATA: " + message.toString())
 
                     if (message.message === 'upload') {
-                        this.addPeerTo(message.IP, Number(message.port), message.ID, message.infoHash)
+                        this.addPeerTo(remoteIP, portSendFile, message.ID, message.infoHash)
                     }
 
                     if (message.message === SEND_DOWNLOAD_SIGNAL_MSG) {
