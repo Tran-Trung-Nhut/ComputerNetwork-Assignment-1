@@ -677,7 +677,6 @@ class NOde {
                 }
             }
             writeStream.end()
-            writeStream.destroy()
             this.downloads[pieceInfo.infoHash] = { downloadStates: [] }
             this.ws?.send(JSON.stringify({
                 message: 'download successfully',
