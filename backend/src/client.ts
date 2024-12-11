@@ -490,7 +490,7 @@ class NOde {
             const msg = { message: SEND_PIECEINFOS_MSG, pieceInfo: chunkInfo, port: portSendFile }
 
 
-            const socket = await getConnections(peer.info, this.peerConnections)
+            const socket = this.getPeerConnect(peer.info)
             socket.write(JSON.stringify(msg), (error) => {
                 if (error) {
                     logger.error('Send downloadInfo fail:', error);
@@ -557,7 +557,7 @@ class NOde {
 
         const tracker = torrent.announce[0]
         const [ip, port] = tracker.split(':')
-        const socketToTracker = await getConnections({ IP: ip, port: port, ID: 'tracker' }, this.trackerConnections)
+        const socketToTracker = getConnections({ IP: ip, port: port, ID: 'tracker' }, this.trackerConnections)
         this.sendOnlinePeerToFE(ip, port)
         logger.info(`Tracker info from torrent: IP-${ip} and port-${port}`)
         try {
@@ -584,7 +584,7 @@ class NOde {
         let flag = false
         // MỘT PIECE CHO MỘT LẦN GỬI
         if (pieceInfo.indices.length != 0) {
-            const socket = await getConnections(peerInfo, this.peerConnections)
+            const socket = getConnections(peerInfo, this.peerConnections)
             const chunks = getFilePieces(torrentPath, pieceInfo.file.pieceLength, pieceInfo.indices);
             await this.sendPiecesSequentially(chunks, pieceInfo, socket, peerInfo, pieceInfo.indices, pieceInfo.file);
         }
@@ -740,7 +740,7 @@ class NOde {
             if (ele.peerInfo.IP === IP && ele.peerInfo.port === port) flag = true
         })
         if (flag) return
-        this.trackerSocket = await getConnections({ IP: IP, port: port, ID: 'tracker' }, this.trackerConnections)
+        this.trackerSocket = getConnections({ IP: IP, port: port, ID: 'tracker' }, this.trackerConnections)
         try {
             this.trackerSocket.on('data', (data) => {
                 const message = JSON.parse(data.toString())
@@ -756,6 +756,24 @@ class NOde {
         } catch (error) {
             logger.error(`Connect to tracker fail or get data from tracker fail`)
         }
+    }
+    private getPeerConnect(peer: PeerInfo): Socket {
+        let flag = false
+        this.trackerConnections.forEach((ele) => {
+            if (ele.peerInfo.IP === peer.IP && ele.peerInfo.port === peer.port) flag = true
+        })
+        const socket = getConnections(peer, this.peerConnections)
+        if (!flag) {
+            socket.on('error', (err) => {
+                logger.error(err.name + err.message)
+                if (err.message.includes('ECONNRESET')) {
+                    removeConnections({ IP: peer.IP, port: portSendFile, ID: '' }, this.peerConnections)
+                    setPeerOffline(this.downloads, { IP: peer.IP, port: portSendFile, ID: '' })
+                    logger.error(`Peer ${peer.IP} offline`)
+                }
+            })
+        }
+        return socket
     }
 }
 if (IP) new NOde(defaultPort, IP, peerID)

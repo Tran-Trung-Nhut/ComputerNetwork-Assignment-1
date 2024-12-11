@@ -81,61 +81,29 @@ export function deletePeerOutofOnlineList(onlineList: PeerInfo[]) {
 
 
 
-export async function getConnections(peer: PeerInfo, connections: Connection[]): Promise<Socket> {
+export function getConnections(peer: PeerInfo, connections: Connection[]): Socket {
     // Check if there's an existing connection
     for (let index = 0; index < connections.length; index++) {
         if (checkEqual2Peers(connections[index].peerInfo, peer)) {
             return connections[index].socket;
         }
     }
-
-
-
-
-    // Create a new socket
     const socket = new Socket();
+    // Push the connection early to track it
+    connections.push({ peerInfo: peer, socket });
+    socket.connect(peer.port, peer.IP, () => {
+        logger.info(`Connected successfully to IP:${peer.IP} - Port:${peer.port}`);
+    });
 
-
-
-
-    try {
-        // Push the connection early to track it
-        connections.push({ peerInfo: peer, socket });
-
-
-
-
-        // Await the connection using a Promise wrapper
-        await new Promise<void>((resolve, reject) => {
-            socket.connect(peer.port, peer.IP, () => {
-                logger.info(`Connected successfully to IP:${peer.IP} - Port:${peer.port}`);
-                resolve();
-            });
-
-
-
-
-            // Handle connection errors
-            socket.on('error', (err) => {
-                logger.error(`Connection error with IP:${peer.IP} - Port:${peer.port}: ${err.message}`);
-                reject(err);
-            });
-        });
-    } catch (error) {
-        // Remove the failed connection from the list
-        connections.pop();
-    }
-
-
+    socket.on('error', (err) => {
+        logger.error(`Connection error with IP:${peer.IP} - Port:${peer.port}: ${err.message}`);
+    });
 
 
     return socket;
 }
 
-
-
 export function removeConnections(peer: PeerInfo, connections: Connection[]) {
-    console.log(connections)
     for (let index = 0; index < connections.length; index++) {
         if (checkEqual2Peers(connections[index].peerInfo, peer)) {
             logger.info(`Remove connection with ${peer.IP}`)
