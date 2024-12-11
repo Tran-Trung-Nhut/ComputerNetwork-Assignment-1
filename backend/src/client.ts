@@ -376,15 +376,7 @@ class NOde {
                 const torrentJSON = parseTorrent(torrent)
                 const [ip, port] = trackerURL.split(':')
                 console.log(ip + ' ' + port)
-                const tracker = getConnections({ IP: ip, port: Number(port), ID: 'tracker' }, this.trackerConnections)
-                tracker.write(JSON.stringify({
-                    message: 'upload',
-                    infoHash: torrentJSON.infoHash,
-                    id: 'User'
-                }))
-                ws.send(JSON.stringify({
-                    message: 'Create torrent successfully'
-                }))
+                this.uploadFile({ IP: ip, port: Number(port), ID: 'tracker' }, torrentJSON.infoHash)
             })
 
         })
@@ -672,11 +664,6 @@ class NOde {
         // Check xem các piece đã đc gửi đầy đủ chưa
         if (total_index.length === downloadState.maxSize) {
             const writeStream = fs.createWriteStream('repository/copy_' + pieceInfo.file.name);
-            writeStream.on('finish', () => {
-                logger.info(`Download file successfully`);
-            });
-
-
             // Handle errors if any occur
             writeStream.on('error', (err) => {
                 console.error('Error writing file:', err);
@@ -690,14 +677,20 @@ class NOde {
                 }
             }
             writeStream.end()
+            writeStream.destroy()
             this.downloads[pieceInfo.infoHash] = { downloadStates: [] }
             this.ws?.send(JSON.stringify({
                 message: 'download successfully',
             }))
             logger.info(`Download file successfully`)
+
             this.ws?.send(JSON.stringify({
                 message: 'download successfully',
             }))
+
+            //Seeding file
+            this.uploadFile(this.trackerConnections[0].peerInfo, pieceInfo.infoHash)
+
         } else if (getAllPiecesFromOnlinedPieces(downloadState)) {
             this.reScheduleDownload(pieceInfo.infoHash, pieceInfo.file, downloadState)
         }
@@ -728,6 +721,14 @@ class NOde {
         } catch (error) {
             logger.error(`Connect to tracker fail or get data from tracker fail`)
         }
+    }
+    private uploadFile(trackerInfo: PeerInfo, infoHash: string) {
+        const tracker = getConnections({ IP: trackerInfo.IP, port: trackerInfo.port, ID: 'tracker' }, this.trackerConnections)
+        tracker.write(JSON.stringify({
+            message: 'upload',
+            infoHash: infoHash,
+            id: 'User'
+        }))
     }
     private getPeerConnect(peer: PeerInfo): Socket {
         let flag = false
