@@ -406,6 +406,9 @@ class NOde {
                 const peerHavingFiles: PeerInfo[] = message.peers
                 if (peerHavingFiles.length == 0) {
                     logger.error(`Not exist peer having this ${path.basename(file.path)}`)
+                    this.ws?.send(JSON.stringify({
+                        message: 'Not find peers having files with your given file torrent'
+                    }))
                     return;
                 }
 

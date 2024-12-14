@@ -36,6 +36,10 @@ export default function Home() {
                 setDownloadInfo(message.data)
             }
 
+            if (message.message === 'Not find peers having files with your given file torrent') {
+                alert(message.message)
+            }
+
             if (message.message === 'download successfully') {
                 setIsPopupOpen(false)
                 alert(`tệp ${downloadInfo?.file.name} tải thành công`)
@@ -45,17 +49,7 @@ export default function Home() {
         ws.addEventListener('message', getData);
     }, [ws])
 
-    const testDownload = () => {
-        if (!ws) {
-            console.error('WebSocket is not open.');
-            return;
-        }
 
-        ws.send(JSON.stringify({
-            message: 'download by torrent',
-            fileName: 'dog.mp4_1.torrent',
-        }))
-    }
 
     return (
         <div className="flex flex-col items-center justify-center space-y-5 p-4">
@@ -85,8 +79,8 @@ export default function Home() {
                 <button
                     className="p-3 border-2 hover:bg-gray-100 active:scale-90 rounded"
                 >
-                    <FontAwesomeIcon icon={faBug} style={{ height: '50px', width: '50px' }} onClick={() => testDownload()} />
-                    <p className="font-mono text-sm">Dev Test</p>
+                    <FontAwesomeIcon icon={faBug} style={{ height: '50px', width: '50px' }} />
+                    <p className="font-mono text-sm">Upload</p>
                 </button>
             </div>
             {isPopupOpen && (

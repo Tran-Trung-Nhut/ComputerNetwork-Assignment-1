@@ -91,6 +91,8 @@ class Tracker {
         if (!this.infoHashList) return
 
         await updateInfoHashFile(infoHash, { IP: IP, port: port, ID: ID }, infoHashMapPeersJSONPath)
+        this.updatePeerList(IP)
+
     }
 
     private responsePeerInfoForDownloading = (socket: Socket, infohash: string) => {
@@ -149,7 +151,11 @@ class Tracker {
         });
 
     }
-
+    private async updatePeerList(IP: string) {
+        if (!(IP in this.onlinePeers)) this.connectToPeer(IP)
+        this.infoHashList = JSON.parse(readFileSync(infoHashMapPeersJSONPath, 'utf8'));
+        console.log(this.infoHashList)
+    }
     private connectToPeer(IP: string) {
         const client = new Socket();
 
@@ -160,7 +166,6 @@ class Tracker {
 
             // You can now interact with the server here
         });
-
         client.on('error', (err) => {
             logger.error(`Peer IP-${IP} offline. Retrying...`);
             this.onlinePeers[IP] = false;
